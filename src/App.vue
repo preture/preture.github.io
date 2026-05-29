@@ -6,10 +6,10 @@
         <nav class="nav">
           <router-link to="/">首页</router-link>
           <router-link
-            v-for="page in navPages"
-            :key="page.path"
-            :to="page.path"
-          >{{ page.title }}</router-link>
+            v-for="cat in categories"
+            :key="cat.id"
+            :to="`/${cat.id}`"
+          >{{ cat.name }}</router-link>
         </nav>
       </div>
     </header>
@@ -26,10 +26,8 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-import { navPages } from './router'
+import { categories } from './router'
 
-const route = useRoute()
 const year = computed(() => new Date().getFullYear())
 </script>
 

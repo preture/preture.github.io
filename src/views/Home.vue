@@ -2,44 +2,44 @@
   <div class="home">
     <section class="hero">
       <h1>preture</h1>
-      <p class="subtitle">个人主页 / 技术笔记</p>
+      <p class="subtitle">持续探索，记录分享</p>
     </section>
 
     <section class="intro">
-      <p>欢迎来到 preture 的个人站点。这里会整理和分享技术相关的笔记与文章。</p>
+      <p>欢迎来到 preture 的个人站点。这里记录着我在编程、AI 和各类项目中的探索与实践。</p>
     </section>
 
-    <section v-if="pages.length" class="pages-list">
-      <h2>文章</h2>
-      <div class="card-grid">
-        <router-link
-          v-for="page in pages"
-          :key="page.path"
-          :to="page.path"
-          class="card"
-        >
-          <h3>{{ page.title }}</h3>
-          <span class="card-link">阅读 &rarr;</span>
-        </router-link>
-      </div>
+    <section class="categories">
+      <router-link
+        v-for="cat in categories"
+        :key="cat.id"
+        :to="`/${cat.id}`"
+        class="category-card"
+        :style="{ '--accent': cat.color }"
+      >
+        <span class="cat-emoji">{{ cat.emoji }}</span>
+        <h2>{{ cat.name }}</h2>
+        <p class="cat-desc">{{ cat.description }}</p>
+        <span class="cat-count">{{ cat.topics.length }} 个主题</span>
+        <span class="cat-arrow">&rarr;</span>
+      </router-link>
     </section>
   </div>
 </template>
 
 <script setup>
-import { navPages } from '../router'
-const pages = navPages
+import { categories } from '../router'
 </script>
 
 <style scoped>
 .home {
-  max-width: 720px;
+  max-width: 960px;
   margin: 0 auto;
 }
 
 .hero {
   text-align: center;
-  padding: 3rem 0 1.5rem;
+  padding: 3rem 0 1rem;
 }
 
 .hero h1 {
@@ -58,41 +58,69 @@ const pages = navPages
   margin-bottom: 2.5rem;
   color: #444;
   line-height: 1.7;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.pages-list h2 {
-  font-size: 1.25rem;
-  margin-bottom: 1rem;
-  color: #2c3e50;
-}
-
-.card-grid {
+.categories {
   display: grid;
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.25rem;
 }
 
-.card {
-  display: block;
-  padding: 1.25rem 1.5rem;
+.category-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border-radius: 10px;
   text-decoration: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  position: relative;
 }
 
-.card:hover {
-  border-color: #3498db;
-  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.1);
+.category-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
 }
 
-.card h3 {
+.cat-emoji {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.category-card h2 {
   margin: 0 0 0.5rem;
+  font-size: 1.2rem;
   color: #2c3e50;
-  font-size: 1.125rem;
 }
 
-.card-link {
-  color: #3498db;
+.cat-desc {
+  color: #666;
   font-size: 0.875rem;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.cat-count {
+  color: #999;
+  font-size: 0.8rem;
+  margin-top: 0.75rem;
+}
+
+.cat-arrow {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  color: var(--accent);
+  font-size: 1.25rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.category-card:hover .cat-arrow {
+  opacity: 1;
 }
 </style>

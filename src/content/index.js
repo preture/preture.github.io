@@ -1,0 +1,120 @@
+import { categories, findTopic } from '../config/site'
+
+const mdModules = import.meta.glob('/src/content/**/*.md', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+})
+
+function extractTitle(content) {
+  const match = content.match(/^#\s+(.+)/m)
+  return match ? match[1].trim() : 'Untitled'
+}
+
+const articlesByTopic = {}
+const articlesBySubTopic = {}
+
+for (const [filePath, content] of Object.entries(mdModules)) {
+  const relativePath = filePath.replace('/src/content/', '').replace(/\.md$/, '')
+  const parts = relativePath.split('/')
+
+  if (parts.length === 3) {
+    const [catSlug, topicSlug, articleSlug] = parts
+    const key = `${catSlug}/${topicSlug}`
+    if (!articlesByTopic[key]) articlesByTopic[key] = []
+    articlesByTopic[key].push({
+      slug: articleSlug,
+      title: extractTitle(content),
+      content,
+    })
+  } else if (parts.length === 4) {
+    const [catSlug, topicSlug, subSlug, articleSlug] = parts
+    const key = `${catSlug}/${topicSlug}/${subSlug}`
+    if (!articlesBySubTopic[key]) articlesBySubTopic[key] = []
+    articlesBySubTopic[key].push({
+      slug: articleSlug,
+      title: extractTitle(content),
+      content,
+    })
+  }
+}
+
+export function getTopicArticles(categorySlug, topicSlug) {
+  return articlesByTopic[`${categorySlug}/${topicSlug}`] || []
+}
+
+export function getSubTopicArticles(categorySlug, topicSlug, subSlug) {
+  return articlesBySubTopic[`${categorySlug}/${topicSlug}/${subSlug}`] || []
+}
+
+export function getArticle(categorySlug, topicSlug, articleSlug) {
+  const articles = getTopicArticles(categorySlug, topicSlug)
+  return articles.find((a) => a.slug === articleSlug) || null
+}
+
+export function getSubTopicArticle(categorySlug, topicSlug, subSlug, articleSlug) {
+  const articles = getSubTopicArticles(categorySlug, topicSlug, subSlug)
+  return articles.find((a) => a.slug === articleSlug) || null
+}
+
+export function buildRoutes() {
+  const routes = []
+
+  categories.forEach((cat) => {
+    routes.push({
+      path: `/${cat.id}`,
+      name: `category-${cat.id}`,
+      component: () => import('../views/CategoryPage.vue'),
+      props: { categorySlug: cat.id },
+    })
+
+    cat.topics.forEach((topic) => {
+      if (topic.subTopics) {
+        routes.push({
+          path: `/${cat.id}/${topic.id}`,
+          name: `topic-${cat.id}-${topic.id}`,
+          component: () => import('../views/TopicPage.vue'),
+          props: { categorySlug: cat.id, topicId: topic.id },
+        })
+
+        topic.subTopics.forEach((sub) => {
+          routes.push({
+            path: `/${cat.id}/${topic.id}/${sub.id}`,
+            name: `subtopic-${cat.id}-${topic.id}-${sub.id}`,
+            component: () => import('../views/SubTopicPage.vue'),
+            props: { categorySlug: cat.id, topicId: topic.id, subTopicId: sub.id },
+          })
+
+          const articles = getSubTopicArticles(cat.id, topic.id, sub.id)
+          articles.forEach((article) => {
+            routes.push({
+              path: `/${cat.id}/${topic.id}/${sub.id}/${article.slug}`,
+              name: `article-${cat.id}-${topic.id}-${sub.id}-${article.slug}`,
+              component: () => import('../views/ArticlePage.vue'),
+              props: { ...article, categorySlug: cat.id, topicId: topic.id, subTopicId: sub.id },
+            })
+          })
+        })
+      } else {
+        routes.push({
+          path: `/${cat.id}/${topic.id}`,
+          name: `topic-${cat.id}-${topic.id}`,
+          component: () => import('../views/TopicPage.vue'),
+          props: { categorySlug: cat.id, topicId: topic.id },
+        })
+
+        const articles = getTopicArticles(cat.id, topic.id)
+        articles.forEach((article) => {
+          routes.push({
+            path: `/${cat.id}/${topic.id}/${article.slug}`,
+            name: `article-${cat.id}-${topic.id}-${article.slug}`,
+            component: () => import('../views/ArticlePage.vue'),
+            props: { ...article, categorySlug: cat.id, topicId: topic.id },
+          })
+        })
+      }
+    })
+  })
+
+  return routes
+}
