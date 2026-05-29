@@ -1,6 +1,6 @@
 <template>
-  <div class="subtopic-page">
-    <div class="breadcrumb">
+  <div class="subtopic-page container page-pad">
+    <nav class="breadcrumb">
       <router-link to="/">首页</router-link>
       <span class="sep">/</span>
       <router-link :to="`/${categorySlug}`">{{ category?.name }}</router-link>
@@ -8,7 +8,7 @@
       <router-link :to="`/${categorySlug}/${topicId}`">{{ topic?.name }}</router-link>
       <span class="sep">/</span>
       <span>{{ subTopic?.name }}</span>
-    </div>
+    </nav>
 
     <div class="subtopic-header">
       <h1>{{ subTopic?.name }}</h1>
@@ -27,6 +27,7 @@
     </div>
 
     <div v-else class="placeholder">
+      <div class="placeholder-icon">📝</div>
       <p>功能完善中，敬请期待</p>
     </div>
   </div>
@@ -46,38 +47,47 @@ const props = defineProps({
 const category = computed(() => findCategory(props.categorySlug))
 const topic = computed(() => findTopic(props.categorySlug, props.topicId))
 const subTopic = computed(() => findSubTopic(props.categorySlug, props.topicId, props.subTopicId))
-
 const articles = computed(() => getSubTopicArticles(props.categorySlug, props.topicId, props.subTopicId))
 </script>
 
 <style scoped>
-.subtopic-page {
-  max-width: 720px;
-  margin: 0 auto;
+.page-pad {
+  padding-top: 2rem;
+  padding-bottom: 3rem;
 }
 
 .breadcrumb {
-  font-size: 0.875rem;
-  color: #999;
-  margin-bottom: 1.5rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 2rem;
 }
 
 .breadcrumb a {
-  color: #3498db;
+  color: var(--link);
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.breadcrumb a:hover {
+  opacity: 1;
 }
 
 .sep {
   margin: 0 0.5rem;
+  color: var(--text-muted);
+  opacity: 0.4;
 }
 
 .subtopic-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .subtopic-header h1 {
   font-size: 1.5rem;
-  color: #2c3e50;
+  color: var(--heading);
   margin: 0;
+  font-family: var(--font-heading);
+  font-weight: 700;
 }
 
 .article-list {
@@ -88,32 +98,56 @@ const articles = computed(() => getSubTopicArticles(props.categorySlug, props.to
 .article-item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
   padding: 0.75rem 1rem;
-  border: 1px solid #eee;
-  border-radius: 6px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  background: var(--bg-card);
   text-decoration: none;
-  transition: background 0.15s;
+  backdrop-filter: var(--backdrop);
+  -webkit-backdrop-filter: var(--backdrop);
+  transition: border-color 0.2s, background 0.2s, padding 0.2s;
 }
 
 .article-item:hover {
-  background: #f5f5f5;
+  border-color: var(--border);
+  background: var(--accent-soft);
+  padding-left: 1.25rem;
+  text-decoration: none;
 }
 
 .article-title {
-  color: #333;
+  color: var(--text);
   flex: 1;
+  font-size: 0.925rem;
 }
 
 .article-arrow {
-  color: #999;
-  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.article-item:hover .article-arrow {
+  opacity: 1;
 }
 
 .placeholder {
   text-align: center;
-  padding: 4rem 0;
-  color: #999;
+  padding: 5rem 0;
+  color: var(--text-muted);
+}
+
+.placeholder-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  opacity: 0.4;
+}
+
+.placeholder p {
   font-size: 1rem;
+  opacity: 0.7;
 }
 </style>

@@ -76,3 +76,14 @@ export function findSubTopic(categorySlug, topicSlug, subSlug) {
   if (!topic || !topic.subTopics) return null
   return topic.subTopics.find((s) => s.id === subSlug) || null
 }
+
+export const giscus = {
+  repo: 'preture/preture.github.io',
+  repoId: '',
+  category: 'Announcements',
+  categoryId: '',
+  mapping: 'pathname',
+  lang: 'zh-CN',
+}
+
+export const busuanzi = true

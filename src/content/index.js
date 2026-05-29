@@ -57,6 +57,36 @@ export function getSubTopicArticle(categorySlug, topicSlug, subSlug, articleSlug
   return articles.find((a) => a.slug === articleSlug) || null
 }
 
+export function buildSearchIndex() {
+  const result = []
+
+  for (const [key, articles] of Object.entries(articlesByTopic)) {
+    const [catSlug, topicSlug] = key.split('/')
+    for (const a of articles) {
+      result.push({
+        title: a.title,
+        path: `/${catSlug}/${topicSlug}/${a.slug}`,
+        category: catSlug,
+        body: a.content.replace(/^#\s+.+$/m, '').slice(0, 500),
+      })
+    }
+  }
+
+  for (const [key, articles] of Object.entries(articlesBySubTopic)) {
+    const [catSlug, topicSlug, subSlug] = key.split('/')
+    for (const a of articles) {
+      result.push({
+        title: a.title,
+        path: `/${catSlug}/${topicSlug}/${subSlug}/${a.slug}`,
+        category: catSlug,
+        body: a.content.replace(/^#\s+.+$/m, '').slice(0, 500),
+      })
+    }
+  }
+
+  return result
+}
+
 export function buildRoutes() {
   const routes = []
 

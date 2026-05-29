@@ -1,29 +1,39 @@
 <template>
   <div class="home">
     <section class="hero">
-      <h1>preture</h1>
-      <p class="subtitle">持续探索，记录分享</p>
+      <div class="hero-bg"></div>
+      <div class="hero-content container">
+        <div class="hero-text">
+          <h1 class="hero-title">preture</h1>
+          <p class="hero-subtitle">持续探索，记录分享</p>
+          <p class="hero-desc">
+            在编程、AI 和各类项目中不断折腾，把学到的、做过的都写在这里
+          </p>
+        </div>
+      </div>
     </section>
 
-    <section class="intro">
-      <p>欢迎来到 preture 的个人站点。这里记录着我在编程、AI 和各类项目中的探索与实践。</p>
-    </section>
-
-    <section class="categories">
-      <router-link
-        v-for="cat in categories"
-        :key="cat.id"
-        :to="`/${cat.id}`"
-        class="category-card"
-        :style="{ '--accent': cat.color }"
-      >
-        <span class="cat-emoji">{{ cat.emoji }}</span>
-        <h2>{{ cat.name }}</h2>
-        <p class="cat-desc">{{ cat.description }}</p>
-        <span class="cat-count">{{ cat.topics.length }} 个主题</span>
-        <span class="cat-arrow">&rarr;</span>
-      </router-link>
-    </section>
+    <div class="container">
+      <section class="categories">
+        <router-link
+          v-for="cat in categories"
+          :key="cat.id"
+          :to="`/${cat.id}`"
+          class="category-card"
+          :style="{ '--card-accent': cat.color }"
+        >
+          <div class="card-top">
+            <span class="cat-emoji">{{ cat.emoji }}</span>
+            <span class="cat-arrow">&rarr;</span>
+          </div>
+          <h2>{{ cat.name }}</h2>
+          <p class="cat-desc">{{ cat.description }}</p>
+          <div class="card-footer">
+            <span class="cat-count">{{ cat.topics.length }} 个主题</span>
+          </div>
+        </router-link>
+      </section>
+    </div>
   </div>
 </template>
 
@@ -33,39 +43,66 @@ import { categories } from '../router'
 
 <style scoped>
 .home {
-  max-width: 960px;
-  margin: 0 auto;
+  padding-bottom: 3rem;
 }
 
 .hero {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-hero);
+  padding: 4rem 0 3.5rem;
+  margin-bottom: 3rem;
+  box-shadow: var(--shadow-hero);
+  transition: background 0.4s ease, box-shadow 0.4s ease;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.06;
+  background-image:
+    radial-gradient(circle at 20% 50%, var(--accent) 0%, transparent 50%),
+    radial-gradient(circle at 80% 50%, var(--accent) 0%, transparent 50%);
+  transition: background 0.4s ease;
+}
+
+.hero-content {
+  position: relative;
   text-align: center;
-  padding: 3rem 0 1rem;
 }
 
-.hero h1 {
-  font-size: 2.5rem;
-  margin: 0 0 0.5rem;
-  color: #2c3e50;
+.hero-title {
+  font-size: 3rem;
+  font-weight: 800;
+  margin: 0 0 0.35rem;
+  color: var(--hero-text);
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+  transition: color 0.4s ease;
 }
 
-.subtitle {
-  color: #666;
-  font-size: 1.125rem;
+.hero-subtitle {
+  font-size: 1.2rem;
+  color: var(--hero-text);
+  opacity: 0.7;
+  margin-bottom: 0.75rem;
+  font-weight: 400;
+  transition: color 0.4s ease;
 }
 
-.intro {
-  text-align: center;
-  margin-bottom: 2.5rem;
-  color: #444;
-  line-height: 1.7;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
+.hero-desc {
+  color: var(--hero-text);
+  opacity: 0.5;
+  font-size: 0.9rem;
+  max-width: 480px;
+  margin: 0 auto;
+  line-height: 1.6;
+  transition: color 0.4s ease;
 }
 
 .categories {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1.25rem;
 }
 
@@ -73,54 +110,89 @@ import { categories } from '../router'
   display: flex;
   flex-direction: column;
   padding: 1.5rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
   text-decoration: none;
-  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
   position: relative;
+  backdrop-filter: var(--backdrop);
+  -webkit-backdrop-filter: var(--backdrop);
+  box-shadow: var(--shadow);
+  transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s, background 0.4s;
+  overflow: hidden;
+}
+
+.category-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--card-accent, var(--accent));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
 }
 
 .category-card:hover {
-  border-color: var(--accent);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  transform: translateY(-2px);
+  border-color: transparent;
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-4px);
+  text-decoration: none;
+}
+
+.category-card:hover::before {
+  transform: scaleX(1);
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
 }
 
 .cat-emoji {
   font-size: 2rem;
-  margin-bottom: 0.5rem;
-}
-
-.category-card h2 {
-  margin: 0 0 0.5rem;
-  font-size: 1.2rem;
-  color: #2c3e50;
-}
-
-.cat-desc {
-  color: #666;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  flex: 1;
-}
-
-.cat-count {
-  color: #999;
-  font-size: 0.8rem;
-  margin-top: 0.75rem;
+  line-height: 1;
 }
 
 .cat-arrow {
-  position: absolute;
-  right: 1rem;
-  bottom: 1rem;
-  color: var(--accent);
+  color: var(--card-accent, var(--accent));
   font-size: 1.25rem;
   opacity: 0;
-  transition: opacity 0.2s;
+  transform: translateX(-4px);
+  transition: opacity 0.3s, transform 0.3s;
 }
 
 .category-card:hover .cat-arrow {
   opacity: 1;
+  transform: translateX(0);
+}
+
+.category-card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.15rem;
+  color: var(--heading);
+  font-family: var(--font-heading);
+}
+
+.cat-desc {
+  color: var(--text-soft);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.card-footer {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.cat-count {
+  color: var(--text-muted);
+  font-size: 0.8rem;
 }
 </style>
