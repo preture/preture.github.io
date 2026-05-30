@@ -1,4 +1,4 @@
-import { categories, findTopic } from '../config/site'
+import { categories, findCategory, findTopic } from '../config/site'
 
 const mdModules = import.meta.glob('/open/**/*.md', {
   eager: true,
@@ -62,11 +62,15 @@ export function buildSearchIndex() {
 
   for (const [key, articles] of Object.entries(articlesByTopic)) {
     const [catSlug, topicSlug] = key.split('/')
+    const cat = findCategory(catSlug)
+    const topic = findTopic(catSlug, topicSlug)
     for (const a of articles) {
       result.push({
         title: a.title,
         path: `/${catSlug}/${topicSlug}/${a.slug}`,
         category: catSlug,
+        categoryName: cat?.name || catSlug,
+        topicName: topic?.name || topicSlug,
         body: a.content.replace(/^#\s+.+$/m, '').slice(0, 500),
       })
     }
@@ -74,11 +78,17 @@ export function buildSearchIndex() {
 
   for (const [key, articles] of Object.entries(articlesBySubTopic)) {
     const [catSlug, topicSlug, subSlug] = key.split('/')
+    const cat = findCategory(catSlug)
+    const topic = findTopic(catSlug, topicSlug)
+    const sub = topic?.subTopics?.find((s) => s.id === subSlug)
     for (const a of articles) {
       result.push({
         title: a.title,
         path: `/${catSlug}/${topicSlug}/${subSlug}/${a.slug}`,
         category: catSlug,
+        categoryName: cat?.name || catSlug,
+        topicName: topic?.name || topicSlug,
+        subTopicName: sub?.name || subSlug,
         body: a.content.replace(/^#\s+.+$/m, '').slice(0, 500),
       })
     }

@@ -16,8 +16,12 @@
       <button v-if="query" class="clear-btn" @click="query = ''">&times;</button>
     </div>
 
-    <div v-if="query && results.length" class="results">
-      <p class="result-count">共 {{ results.length }} 条结果</p>
+    <div v-if="query && !results.length" class="empty">
+      <p>未找到相关文章</p>
+    </div>
+
+    <div v-if="results.length" class="results">
+      <p class="result-count">{{ query ? `共 ${results.length} 条结果` : `共 ${results.length} 篇文章` }}</p>
       <router-link
         v-for="r in results"
         :key="r.path"
@@ -25,16 +29,8 @@
         class="result-item"
       >
         <div class="result-title">{{ r.title }}</div>
-        <div class="result-path">{{ r.path }}</div>
+        <div class="result-path">{{ r.categoryName }} / {{ r.topicName }}<template v-if="r.subTopicName"> / {{ r.subTopicName }}</template></div>
       </router-link>
-    </div>
-
-    <div v-else-if="query && !results.length" class="empty">
-      <p>未找到相关文章</p>
-    </div>
-
-    <div v-else class="empty">
-      <p>输入关键词搜索文章</p>
     </div>
   </div>
 </template>
@@ -43,9 +39,12 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import Fuse from 'fuse.js'
 import { buildSearchIndex } from '../content'
+import { getCategoryLevel } from '../config/site'
+import { useAuth } from '../composables/useAuth'
 
 const query = ref('')
 const inputRef = ref(null)
+const { canAccess } = useAuth()
 
 const fuse = computed(() => {
   const items = buildSearchIndex()
@@ -57,9 +56,16 @@ const fuse = computed(() => {
   })
 })
 
+const allArticles = computed(() => {
+  return buildSearchIndex().filter((item) => canAccess(getCategoryLevel(item.category)))
+})
+
 const results = computed(() => {
-  if (!query.value.trim()) return []
-  return fuse.value.search(query.value.trim()).map((r) => r.item)
+  if (!query.value.trim()) return allArticles.value
+  return fuse.value
+    .search(query.value.trim())
+    .map((r) => r.item)
+    .filter((item) => canAccess(getCategoryLevel(item.category)))
 })
 
 onMounted(() => {
@@ -160,7 +166,7 @@ onMounted(() => {
 }
 
 .result-path {
-  color: var(--text-muted);
+  color: var(--text-soft);
   font-size: 0.75rem;
 }
 
