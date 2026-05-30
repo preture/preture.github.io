@@ -4,5 +4,5 @@ dist
 .DS_Store
 protected/
 privated/
-src/content/protected/
-src/content/privated/
+open/protected/
+open/privated/

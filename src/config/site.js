@@ -75,7 +75,7 @@ export const categories = [
     name: '私人空间',
     emoji: '🔒',
     color: '#636e72',
-    description: '登录后可见',
+    description: '管理员登录后可见',
     level: 'privated',
     topics: [
       { id: 'private-notes', name: '私人笔记', description: '个人私密笔记' },

@@ -1,6 +1,6 @@
 import { categories, findTopic } from '../config/site'
 
-const mdModules = import.meta.glob('/src/content/**/*.md', {
+const mdModules = import.meta.glob('/open/**/*.md', {
   eager: true,
   query: '?raw',
   import: 'default',
@@ -15,7 +15,7 @@ const articlesByTopic = {}
 const articlesBySubTopic = {}
 
 for (const [filePath, content] of Object.entries(mdModules)) {
-  const relativePath = filePath.replace('/src/content/', '').replace(/\.md$/, '')
+  const relativePath = filePath.replace('/open/', '').replace(/\.md$/, '')
   const parts = relativePath.split('/')
 
   if (parts.length === 3) {

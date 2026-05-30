@@ -78,6 +78,11 @@
 ## 目录结构
 
 ```
+open/                              # 公开内容（受保护内容 CI 解密至此）
+├── accumulation/                  # 厚积薄发
+├── empowerment/                   # 如虎添翼
+├── practice/                      # 身体力行
+└── aspiration/                    # 心之所向
 src/
 ├── main.js                        # 入口
 ├── App.vue                        # 布局外壳（header / footer / 登录 / 主题切换）
@@ -90,15 +95,9 @@ src/
 ├── composables/
 │   └── useAuth.js                 # 登录状态管理 + SHA-256 密码校验
 ├── router/
-│   └── index.js                   # 路由定义 + 隐藏路由守卫
+│   └── index.js                   # 路由定义 + 访问控制守卫
 ├── content/
-│   ├── index.js                   # Markdown glob 加载器 + 搜索引擎索引 + 路由生成
-│   ├── accumulation/              # 厚积薄发
-│   ├── empowerment/               # 如虎添翼
-│   ├── practice/                  # 身体力行
-│   ├── aspiration/                # 心之所向
-│   ├── 保护空间                  ← protected（需登录）
-│   └── 私人空间                  ← privated（仅管理员）
+│   └── index.js                   # Markdown glob 加载器 + 搜索引擎索引 + 路由生成
 ├── components/
 │   ├── MarkdownRenderer.vue       # Markdown 渲染 + 代码高亮
 │   ├── ThemeSwitcher.vue          # 主题下拉切换
@@ -113,7 +112,7 @@ src/
     └── SearchPage.vue             # 全文搜索
 ```
 
-内容存放于 `src/content/`，三级结构（主题 → 文章）或四级结构（主题 → 方向 → 文章）由目录结构自动识别。
+公开内容存放于 `open/`（受保护内容通过 CI 解密到 `open/`），三级结构（主题 → 文章）或四级结构（主题 → 方向 → 文章）由目录结构自动识别。
 
 ---
 
@@ -132,16 +131,16 @@ npm run preview   # 预览构建结果
 
 ### 添加文章
 
-在 `src/content/` 下对应分类/主题目录中创建 `.md` 文件：
+在 `open/` 下对应分类/主题目录中创建 `.md` 文件：
 
 **三级结构**（主题下直接放文章）：
 ```
-src/content/accumulation/great-tools/my-article.md
+open/accumulation/great-tools/my-article.md
 ```
 
 **四级结构**（主题 → 方向 → 文章）：
 ```
-src/content/accumulation/programming-foundation/python/python-special-symbols.md
+open/accumulation/programming-foundation/python/python-special-symbols.md
 ```
 
 文章标题从 Markdown 的第一个 `# ` 标题自动提取。
@@ -392,7 +391,7 @@ git push
 | Markdown 渲染 + 代码高亮 | ✅ |
 | 4 套主题 × 浅色/深色模式 | ✅ |
 | 客户端全文搜索（Fuse.js） | ✅ |
-| 多用户登录 + 隐藏内容 | ✅ |
+| 三级访问控制（open / protected / privated） | ✅ |
 | 页面切换动画 | ✅ |
 | 响应式布局（Grid / Flexbox） | ✅ |
 | Giscus 评论 | ✅（需配置） |
@@ -416,7 +415,7 @@ git push
 ## 内容目录结构
 
 ```
-src/content/
+open/
 ├── accumulation/                  # 厚积薄发
 │   ├── programming-foundation/    # 编程筑基（四级）
 │   │   ├── python/                #   └── .md 文件
@@ -439,9 +438,9 @@ src/content/
 │   ├── history-creation/
 │   ├── ancient-texts/
 │   └── oracle-exploration/
-├── protected/                     # 保护空间（登录后可见）
+├── protected/                     # 保护空间（登录后可见，CI 解密）
 │   └── python-learn/
-└── privated/                      # 私人空间（仅管理员，加密）
+└── privated/                      # 私人空间（仅管理员，CI 解密）
     └── private-notes/
 ```
 

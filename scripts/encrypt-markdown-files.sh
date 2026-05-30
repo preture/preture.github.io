@@ -36,15 +36,15 @@ case "${1:-}" in
     echo
     openssl enc -d -aes-256-cbc -pbkdf2 -pass "pass:$PASS" \
       -in "$ENCRYPTED_FILE" 2>/dev/null \
-    | tar xzf - -C src/content
-    echo "✅ 已解密到 src/content/{protected,privated}/"
+    | tar xzf - -C open
+    echo "✅ 已解密到 open/{protected,privated}/"
     ;;
 
   *)
     echo "用法: $0 {encrypt|decrypt}"
     echo
     echo "  encrypt   将 ${SOURCE_DIRS[*]} 加密为 $ENCRYPTED_FILE"
-    echo "  decrypt   将 $ENCRYPTED_FILE 解密到 src/content/"
+    echo "  decrypt   将 $ENCRYPTED_FILE 解密到 open/"
     exit 1
     ;;
 esac
