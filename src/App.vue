@@ -6,7 +6,7 @@
         <nav class="nav">
           <router-link to="/">首页</router-link>
           <router-link
-            v-for="cat in categories"
+            v-for="cat in navCategories"
             :key="cat.id"
             :to="`/${cat.id}`"
           >{{ cat.name }}</router-link>
@@ -26,6 +26,16 @@
             </svg>
           </button>
           <ThemeSwitcher :model-value="theme" @change="setTheme" />
+          <button
+            v-if="!isAuthenticated"
+            class="nav-login-btn"
+            @click="showLogin = true"
+          >登录</button>
+          <button
+            v-else
+            class="nav-login-btn logged-in"
+            @click="handleLogout"
+          >退出</button>
         </nav>
       </div>
     </header>
@@ -44,20 +54,55 @@
         </span>
       </div>
     </footer>
+    <LoginModal :show="showLogin" @close="closeLogin" @success="onLoginSuccess" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { categories } from './router'
 import { busuanzi as busuanziEnabled } from './config/site'
+import { useAuth } from './composables/useAuth'
 import ThemeSwitcher from './components/ThemeSwitcher.vue'
+import LoginModal from './components/LoginModal.vue'
+
+const router = useRouter()
+const { isAuthenticated, currentUser, pendingRoute, clearPendingRoute, logout } = useAuth()
 
 const THEME_KEY = 'preture-theme'
 const MODE_KEY = 'preture-mode'
 const theme = ref('简约')
 const mode = ref('light')
 const busuanzi = busuanziEnabled
+const showLogin = ref(false)
+
+const navCategories = computed(() =>
+  categories.filter((c) => !c.hidden || isAuthenticated.value)
+)
+
+watch(pendingRoute, (path) => {
+  if (path) showLogin.value = true
+})
+
+function closeLogin() {
+  showLogin.value = false
+  clearPendingRoute()
+}
+
+function onLoginSuccess() {
+  showLogin.value = false
+  const path = pendingRoute.value
+  clearPendingRoute()
+  if (path) router.push(path)
+}
+
+function handleLogout() {
+  logout()
+  if (router.currentRoute.value.meta?.hidden) {
+    router.push('/')
+  }
+}
 
 function setTheme(id) {
   theme.value = id
@@ -200,6 +245,27 @@ const year = computed(() => new Date().getFullYear())
 
 .mode-btn:hover {
   opacity: 1;
+}
+
+.nav-login-btn {
+  background: none;
+  border: 1px solid var(--text-header);
+  color: var(--text-header);
+  opacity: 0.6;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.nav-login-btn:hover {
+  opacity: 1;
+}
+
+.nav-login-btn.logged-in {
+  border-color: var(--text-muted);
+  color: var(--text-muted);
 }
 
 .main-content {

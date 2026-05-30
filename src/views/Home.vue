@@ -15,9 +15,9 @@
 
     <div class="container">
       <section class="categories">
-        <router-link
-          v-for="cat in categories"
-          :key="cat.id"
+          <router-link
+            v-for="cat in visibleCategories"
+            :key="cat.id"
           :to="`/${cat.id}`"
           class="category-card"
           :style="{ '--card-accent': cat.color }"
@@ -38,7 +38,14 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { categories } from '../router'
+import { useAuth } from '../composables/useAuth'
+
+const { isAuthenticated } = useAuth()
+const visibleCategories = computed(() =>
+  categories.filter((c) => !c.hidden || isAuthenticated.value)
+)
 </script>
 
 <style scoped>

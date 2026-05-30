@@ -22,6 +22,15 @@ jobs:
         with:
           node-version: 20
           cache: npm
+      - name: Decrypt hidden content
+        env:
+          PASS: ${{ secrets.HIDDEN_PASSWORD }}
+        if: env.PASS != ''
+        run: |
+          mkdir -p src/content/hidden
+          openssl enc -d -aes-256-cbc -pbkdf2 -pass "pass:$PASS" \
+            -in hidden-content.enc 2>/dev/null \
+          | tar xzf - -C src/content
       - name: Install dependencies
         run: npm ci
       - name: Build

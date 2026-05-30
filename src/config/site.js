@@ -59,6 +59,17 @@ export const categories = [
       { id: 'oracle-exploration', name: '甲骨文探秘', description: '甲骨文文字识别' },
     ],
   },
+  {
+    id: 'hidden',
+    name: '隐藏空间',
+    emoji: '🔒',
+    color: '#636e72',
+    description: '登录后可见',
+    hidden: true,
+    topics: [
+      { id: 'private-notes', name: '私人笔记', description: '个人私密笔记' },
+    ],
+  },
 ]
 
 export function findCategory(slug) {
@@ -75,6 +86,11 @@ export function findSubTopic(categorySlug, topicSlug, subSlug) {
   const topic = findTopic(categorySlug, topicSlug)
   if (!topic || !topic.subTopics) return null
   return topic.subTopics.find((s) => s.id === subSlug) || null
+}
+
+export function isCategoryHidden(categorySlug) {
+  const cat = findCategory(categorySlug)
+  return cat?.hidden || false
 }
 
 export const giscus = {

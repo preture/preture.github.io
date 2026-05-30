@@ -91,11 +91,14 @@ export function buildRoutes() {
   const routes = []
 
   categories.forEach((cat) => {
+    const hidden = cat.hidden ? { hidden: true } : undefined
+
     routes.push({
       path: `/${cat.id}`,
       name: `category-${cat.id}`,
       component: () => import('../views/CategoryPage.vue'),
       props: { categorySlug: cat.id },
+      meta: hidden,
     })
 
     cat.topics.forEach((topic) => {
@@ -105,6 +108,7 @@ export function buildRoutes() {
           name: `topic-${cat.id}-${topic.id}`,
           component: () => import('../views/TopicPage.vue'),
           props: { categorySlug: cat.id, topicId: topic.id },
+          meta: hidden,
         })
 
         topic.subTopics.forEach((sub) => {
@@ -113,6 +117,7 @@ export function buildRoutes() {
             name: `subtopic-${cat.id}-${topic.id}-${sub.id}`,
             component: () => import('../views/SubTopicPage.vue'),
             props: { categorySlug: cat.id, topicId: topic.id, subTopicId: sub.id },
+            meta: hidden,
           })
 
           const articles = getSubTopicArticles(cat.id, topic.id, sub.id)
@@ -122,6 +127,7 @@ export function buildRoutes() {
               name: `article-${cat.id}-${topic.id}-${sub.id}-${article.slug}`,
               component: () => import('../views/ArticlePage.vue'),
               props: { ...article, categorySlug: cat.id, topicId: topic.id, subTopicId: sub.id },
+              meta: hidden,
             })
           })
         })
@@ -131,6 +137,7 @@ export function buildRoutes() {
           name: `topic-${cat.id}-${topic.id}`,
           component: () => import('../views/TopicPage.vue'),
           props: { categorySlug: cat.id, topicId: topic.id },
+          meta: hidden,
         })
 
         const articles = getTopicArticles(cat.id, topic.id)
@@ -140,6 +147,7 @@ export function buildRoutes() {
             name: `article-${cat.id}-${topic.id}-${article.slug}`,
             component: () => import('../views/ArticlePage.vue'),
             props: { ...article, categorySlug: cat.id, topicId: topic.id },
+            meta: hidden,
           })
         })
       }
