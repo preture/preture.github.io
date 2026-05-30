@@ -95,9 +95,9 @@ export function isCategoryHidden(categorySlug) {
 
 export const giscus = {
   repo: 'preture/preture.github.io',
-  repoId: '',
+  repoId: 'R_kgDOSrbzjQ',
   category: 'Announcements',
-  categoryId: '',
+  categoryId: 'DIC_kwDOSrbzjc4C-H4e',
   mapping: 'pathname',
   lang: 'zh-CN',
 }
