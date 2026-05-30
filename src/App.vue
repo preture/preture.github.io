@@ -128,6 +128,18 @@ onMounted(() => {
   if (savedMode) mode.value = savedMode
   apply()
 
+  const returnRoute = sessionStorage.getItem('preture-return')
+  if (returnRoute) {
+    sessionStorage.removeItem('preture-return')
+    if (router.currentRoute.value.fullPath !== returnRoute && returnRoute !== '/') {
+      router.replace(returnRoute)
+    }
+  }
+
+  window.addEventListener('beforeunload', () => {
+    sessionStorage.setItem('preture-return', router.currentRoute.value.fullPath)
+  })
+
   if (busuanzi) {
     const s = document.createElement('script')
     s.src = '//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js'

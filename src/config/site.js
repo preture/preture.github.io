@@ -98,7 +98,7 @@ export const giscus = {
   repoId: 'R_kgDOSrbzjQ',
   category: 'Announcements',
   categoryId: 'DIC_kwDOSrbzjc4C-H4e',
-  mapping: 'pathname',
+  mapping: 'specific',
   lang: 'zh-CN',
 }
 

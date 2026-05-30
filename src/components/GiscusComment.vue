@@ -29,6 +29,7 @@ function loadGiscus() {
   script.setAttribute('data-category', cfg.category)
   script.setAttribute('data-category-id', cfg.categoryId)
   script.setAttribute('data-mapping', cfg.mapping)
+  script.setAttribute('data-term', props.term)
   script.setAttribute('data-strict', '0')
   script.setAttribute('data-reactions-enabled', '1')
   script.setAttribute('data-emit-metadata', '0')
