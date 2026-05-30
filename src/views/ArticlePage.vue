@@ -12,16 +12,29 @@
       </template>
     </nav>
 
-    <MarkdownRenderer :content="content" />
+    <div class="article-layout">
+      <aside class="toc-col" v-if="headings.length">
+        <TableOfContents :headings="headings" />
+      </aside>
+      <div class="content-col">
+        <MarkdownRenderer ref="mdRef" :content="content" />
 
-    <GiscusComment :term="commentTerm" />
+        <GiscusComment :term="commentTerm" />
+      </div>
+    </div>
+
+    <div class="scroll-btns" :class="{ visible: showScrollBtns }">
+      <button class="scroll-btn" @click="scrollTo('top')" title="回到顶部">↑</button>
+      <button class="scroll-btn" @click="scrollTo('bottom')" title="跳到底部">↓</button>
+    </div>
   </article>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import MarkdownRenderer from '../components/MarkdownRenderer.vue'
+import TableOfContents from '../components/TableOfContents.vue'
 import GiscusComment from '../components/GiscusComment.vue'
 import { findCategory, findTopic, findSubTopic } from '../config/site'
 
@@ -33,6 +46,25 @@ const props = defineProps({
 })
 
 const route = useRoute()
+const mdRef = ref(null)
+const headings = ref([])
+
+const showScrollBtns = ref(false)
+
+function scrollTo(pos) {
+  window.scrollTo({ top: pos === 'top' ? 0 : document.documentElement.scrollHeight, behavior: 'smooth' })
+}
+
+function onScroll() {
+  showScrollBtns.value = window.scrollY > 400
+}
+
+watch(() => mdRef.value?.headings, (val) => {
+  headings.value = val ?? []
+}, { immediate: true })
+
+onMounted(() => window.addEventListener('scroll', onScroll))
+onUnmounted(() => window.removeEventListener('scroll', onScroll))
 
 const category = computed(() => findCategory(props.categorySlug))
 const topic = computed(() => findTopic(props.categorySlug, props.topicId))
@@ -68,5 +100,68 @@ const commentTerm = computed(() => route.path)
   margin: 0 0.5rem;
   color: var(--text-muted);
   opacity: 0.4;
+}
+
+.article-layout {
+  display: flex;
+  gap: 2rem;
+}
+
+.toc-col {
+  flex-shrink: 0;
+  width: 190px;
+}
+
+.content-col {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 860px) {
+  .toc-col {
+    display: none;
+  }
+  .article-layout {
+    gap: 0;
+  }
+}
+
+.scroll-btns {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 5rem;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.scroll-btns.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.scroll-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg-card);
+  color: var(--text-soft);
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-hover);
+  transition: transform 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scroll-btn:hover {
+  transform: scale(1.1);
+  color: var(--accent);
 }
 </style>

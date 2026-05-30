@@ -41,7 +41,7 @@
     </header>
     <main class="main-content">
       <router-view v-slot="{ Component }">
-        <transition name="page" mode="out-in">
+        <transition name="page">
           <component :is="Component" />
         </transition>
       </router-view>
@@ -292,18 +292,19 @@ const year = computed(() => new Date().getFullYear())
 }
 
 /* page transition */
-.page-enter-active,
+.page-enter-active {
+  transition: opacity 0.12s ease;
+}
+
 .page-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition: opacity 0.08s ease;
 }
 
 .page-enter-from {
   opacity: 0;
-  transform: translateY(12px);
 }
 
 .page-leave-to {
   opacity: 0;
-  transform: translateY(-12px);
 }
 </style>

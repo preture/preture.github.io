@@ -1,11 +1,19 @@
 <template>
-  <div class="markdown-body" v-html="rendered" />
+  <div class="markdown-body" v-html="rendered" @click="onRootClick" />
 </template>
 
 <script setup>
 import { computed } from 'vue'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
+
+function safeId(text) {
+  return String(text)
+    .trim()
+    .toLowerCase()
+    .replace(/[^\w\u4e00-\u9fff]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
 
 const md = new MarkdownIt({
   html: true,
@@ -24,11 +32,55 @@ const md = new MarkdownIt({
   },
 })
 
+const defaultRender = md.renderer.rules.heading_open || ((tokens, idx, options, env, self) =>
+  self.renderToken(tokens, idx, options)
+)
+
+md.renderer.rules.heading_open = (tokens, idx, options, env, self) => {
+  const token = tokens[idx]
+  const inline = tokens[idx + 1]
+  const text = inline?.children?.map(c => c.content).join('') || ''
+  const id = safeId(text)
+  token.attrSet('id', id)
+  return defaultRender(tokens, idx, options, env, self)
+}
+
 const props = defineProps({
   content: { type: String, required: true },
 })
 
-const rendered = computed(() => md.render(props.content))
+const mdResult = computed(() => {
+  const tokens = md.parse(props.content, {})
+  const html = md.renderer.render(tokens, md.options, {})
+  const headings = []
+  for (let i = 0; i < tokens.length; i++) {
+    if (tokens[i].type === 'heading_open') {
+      const level = parseInt(tokens[i].tag.slice(1))
+      const inline = tokens[i + 1]
+      const text = inline?.children?.map(c => c.content).join('') || ''
+      const id = safeId(text)
+      if (text) headings.push({ level, text, id })
+    }
+  }
+  return { html, headings }
+})
+
+const rendered = computed(() => mdResult.value.html)
+const headings = computed(() => mdResult.value.headings)
+
+defineExpose({ headings })
+
+function onRootClick(e) {
+  const a = e.target.closest('a')
+  if (!a || !a.hasAttribute('href')) return
+  const href = a.getAttribute('href')
+  if (!href.startsWith('#')) return
+  e.preventDefault()
+  let id
+  try { id = decodeURIComponent(href.slice(1)) } catch { id = href.slice(1) }
+  const el = document.getElementById(id)
+  if (el) el.scrollIntoView({ behavior: 'smooth' })
+}
 </script>
 
 <style>
@@ -48,6 +100,7 @@ const rendered = computed(() => md.render(props.content))
   margin-bottom: 0.75rem;
   font-family: var(--font-heading);
   font-weight: 700;
+  scroll-margin-top: 80px;
 }
 
 .markdown-body h1 {

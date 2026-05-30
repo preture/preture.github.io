@@ -195,16 +195,19 @@ src/content/accumulation/programming-foundation/python/python-special-symbols.md
 
 ## 评论系统（Giscus）
 
-1. 在 GitHub 仓库启用 Discussions
-2. 访问 https://giscus.app 获取 `repoId` 和 `categoryId`
-3. 填入 `src/config/site.js`：
+1. **启用 Discussions** — 仓库 → Settings → 找到 Discussions 区域 → 勾选并初始化
+2. **安装 Giscus App** — 访问 https://github.com/apps/giscus → Install → 选择该仓库
+3. **获取配置** — 访问 https://giscus.app，输入仓库名搜索，页面 → 讨论映射选 **pathname**，分类选 **Announcements**
+4. **填入 `src/config/site.js`**：
 
 ```js
 export const giscus = {
   repo: 'preture/preture.github.io',
-  repoId: '...',
+  repoId: '你的 repoId',
   category: 'Announcements',
-  categoryId: '...',
+  categoryId: '你的 categoryId',
+  mapping: 'pathname',
+  lang: 'zh-CN',
 }
 ```
 

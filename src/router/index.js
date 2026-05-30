@@ -1,24 +1,20 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import Home from '../views/Home.vue'
-import SearchPage from '../views/SearchPage.vue'
 import { buildRoutes } from '../content'
 import { categories } from '../config/site'
 import { useAuth } from '../composables/useAuth'
-
-const contentRoutes = buildRoutes()
 
 const routes = [
   {
     path: '/',
     name: 'home',
-    component: Home,
+    component: () => import('../views/Home.vue'),
   },
   {
     path: '/search',
     name: 'search',
-    component: SearchPage,
+    component: () => import('../views/SearchPage.vue'),
   },
-  ...contentRoutes,
+  ...buildRoutes(),
 ]
 
 const router = createRouter({
