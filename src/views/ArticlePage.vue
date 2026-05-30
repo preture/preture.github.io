@@ -19,7 +19,7 @@
       <div class="content-col">
         <MarkdownRenderer ref="mdRef" :content="content" />
 
-        <GiscusComment :term="commentTerm" />
+        <GiscusComment v-if="!isHidden" :term="commentTerm" />
       </div>
     </div>
 
@@ -36,7 +36,7 @@ import { useRoute } from 'vue-router'
 import MarkdownRenderer from '../components/MarkdownRenderer.vue'
 import TableOfContents from '../components/TableOfContents.vue'
 import GiscusComment from '../components/GiscusComment.vue'
-import { findCategory, findTopic, findSubTopic } from '../config/site'
+import { findCategory, findTopic, findSubTopic, isCategoryHidden } from '../config/site'
 
 const props = defineProps({
   content: { type: String, required: true },
@@ -71,6 +71,7 @@ const topic = computed(() => findTopic(props.categorySlug, props.topicId))
 const subTopic = computed(() =>
   props.subTopicId ? findSubTopic(props.categorySlug, props.topicId, props.subTopicId) : null
 )
+const isHidden = computed(() => isCategoryHidden(props.categorySlug))
 const commentTerm = computed(() => route.path)
 </script>
 
