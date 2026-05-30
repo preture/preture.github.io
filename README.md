@@ -27,7 +27,9 @@
 │   ├── 历史穿越创作
 │   ├── 古籍数字化
 │   └── 甲骨文探秘
-└── 隐藏空间（需登录）
+├── 保护空间（需登录）
+│   └── python 学习课件
+└── 私人空间（仅管理员）
     └── 私人笔记
 ```
 
@@ -35,8 +37,9 @@
 
 ```
 站点
- └── 分类（Category）        — 4 + 1 个：厚积薄发 / 如虎添翼 / 身体力行 / 心之所向 / 隐藏空间
+ └── 分类（Category）        — 6 个：厚积薄发 / 如虎添翼 / 身体力行 / 心之所向 / 保护空间 / 私人空间
       ├── 名称
+      ├── 访问级别（open / protected / privated）
       ├── Emoji 图标
       ├── 描述
       └── 主题（Topic）      — 每个分类下若干主题
@@ -94,7 +97,8 @@ src/
 │   ├── empowerment/               # 如虎添翼
 │   ├── practice/                  # 身体力行
 │   ├── aspiration/                # 心之所向
-│   └── hidden/                    # 隐藏空间（需登录）
+│   ├── 保护空间                  ← protected（需登录）
+│   └── 私人空间                  ← privated（仅管理员）
 ├── components/
 │   ├── MarkdownRenderer.vue       # Markdown 渲染 + 代码高亮
 │   ├── ThemeSwitcher.vue          # 主题下拉切换
@@ -225,15 +229,36 @@ export const giscus = {
 
 ---
 
-## 隐藏内容与登录
+## 访问控制与登录
+
+系统支持三级访问级别：
+
+| 级别 | 含义 | 可见性 |
+|------|------|--------|
+| `open` | 公开 | 所有人可见（默认） |
+| `protected` | 保护 | 仅登录用户可见 |
+| `privated` | 私有 | 仅管理员（`role: admin`）可见 |
+
+### 配置分类级别
+
+在 `src/config/site.js` 中为分类添加 `level` 字段：
+
+```js
+{ id: 'protected', level: 'protected', /* ... */ }
+{ id: 'privated',  level: 'privated',  /* ... */ }
+```
+
+不设置 `level` 默认为 `open`。
+
+`protected` 和 `privated` 内容均使用加密归档（见下文）。
 
 ### 配置用户
 
-编辑 `src/config/auth.js`，添加用户名和密码哈希：
+编辑 `src/config/auth.js`，添加用户名、密码哈希和角色：
 
 ```js
 export const users = [
-  { username: 'preture', passwordHash: '...' },
+  { username: 'preture', passwordHash: '...', role: 'admin' },
 ]
 ```
 
@@ -247,19 +272,21 @@ echo -n "你的密码" | openssl dgst -sha256
 node -e "console.log(require('crypto').createHash('sha256').update('你的密码').digest('hex'))"
 ```
 
-### 隐藏笔记加密
+### 内容加密
 
-隐藏内容 (`hidden/`) 不直接提交到 git，而是加密归档，确保公开仓库中不可读。
+`protected` 和 `privated` 级别的内容不直接提交到 git，而是加密归档，确保公开仓库中不可读。
 
-使用脚本 `scripts/encrypt-hidden.sh` 操作：
+源目录为项目根目录下的 `protected/` 和 `privated/`，加密后输出 `restricted-content.enc`。
+
+使用脚本 `scripts/encrypt-markdown-files.sh` 操作：
 
 ```bash
-# 在 hidden/ 下创建笔记后，加密：
-./scripts/encrypt-hidden.sh encrypt
+# 在 protected/ 和 privated/ 下创建笔记后，加密：
+./scripts/encrypt-markdown-files.sh encrypt
 
 # 提交加密文件（不提交原始 markdown）
-git add hidden-content.enc
-git commit -m "update hidden content"
+git add restricted-content.enc
+git commit -m "update restricted content"
 git push
 ```
 
@@ -268,16 +295,16 @@ git push
 本地解密查看：
 
 ```bash
-./scripts/encrypt-hidden.sh decrypt
+./scripts/encrypt-markdown-files.sh decrypt
 ```
 
 ### 工作原理
 
 - 导航栏右侧显示「登录」按钮，登录后显示「退出」
 - 登录状态保存在 `sessionStorage`，关闭标签页后清除
-- 隐藏主题的目录和路由在未登录时不可见
-- 直接访问隐藏 URL 会弹出登录框
-- 新增隐藏分类需添加 `hidden: true` 标记
+- 非公开级别的分类（`protected` / `privated`）在目录和路由中受保护
+- 直接访问受限 URL 会弹出登录框
+- 新增受限分类需添加 `level` 标记
 
 ---
 
@@ -412,7 +439,9 @@ src/content/
 │   ├── history-creation/
 │   ├── ancient-texts/
 │   └── oracle-exploration/
-└── hidden/                        # 隐藏空间（需登录）
+├── protected/                     # 保护空间（登录后可见）
+│   └── python-learn/
+└── privated/                      # 私人空间（仅管理员，加密）
     └── private-notes/
 ```
 

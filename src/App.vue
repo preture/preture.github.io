@@ -68,7 +68,7 @@ import ThemeSwitcher from './components/ThemeSwitcher.vue'
 import LoginModal from './components/LoginModal.vue'
 
 const router = useRouter()
-const { isAuthenticated, currentUser, pendingRoute, clearPendingRoute, logout } = useAuth()
+const { isAuthenticated, currentUser, pendingRoute, clearPendingRoute, logout, canAccess } = useAuth()
 
 const THEME_KEY = 'preture-theme'
 const MODE_KEY = 'preture-mode'
@@ -78,7 +78,7 @@ const busuanzi = busuanziEnabled
 const showLogin = ref(false)
 
 const navCategories = computed(() =>
-  categories.filter((c) => !c.hidden || isAuthenticated.value)
+  categories.filter((c) => canAccess(c.level || 'open'))
 )
 
 watch(pendingRoute, (path) => {
@@ -99,7 +99,7 @@ function onLoginSuccess() {
 
 function handleLogout() {
   logout()
-  if (router.currentRoute.value.meta?.hidden) {
+  if (router.currentRoute.value.meta?.level) {
     router.push('/')
   }
 }

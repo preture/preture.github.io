@@ -91,14 +91,15 @@ export function buildRoutes() {
   const routes = []
 
   categories.forEach((cat) => {
-    const hidden = cat.hidden ? { hidden: true } : undefined
+    const level = cat.level || 'open'
+    const routeMeta = level !== 'open' ? { level } : undefined
 
     routes.push({
       path: `/${cat.id}`,
       name: `category-${cat.id}`,
       component: () => import('../views/CategoryPage.vue'),
       props: { categorySlug: cat.id },
-      meta: hidden,
+      meta: routeMeta,
     })
 
     cat.topics.forEach((topic) => {
@@ -108,7 +109,7 @@ export function buildRoutes() {
           name: `topic-${cat.id}-${topic.id}`,
           component: () => import('../views/TopicPage.vue'),
           props: { categorySlug: cat.id, topicId: topic.id },
-          meta: hidden,
+          meta: routeMeta,
         })
 
         topic.subTopics.forEach((sub) => {
@@ -117,7 +118,7 @@ export function buildRoutes() {
             name: `subtopic-${cat.id}-${topic.id}-${sub.id}`,
             component: () => import('../views/SubTopicPage.vue'),
             props: { categorySlug: cat.id, topicId: topic.id, subTopicId: sub.id },
-            meta: hidden,
+            meta: routeMeta,
           })
 
           const articles = getSubTopicArticles(cat.id, topic.id, sub.id)
@@ -127,7 +128,7 @@ export function buildRoutes() {
               name: `article-${cat.id}-${topic.id}-${sub.id}-${article.slug}`,
               component: () => import('../views/ArticlePage.vue'),
               props: { ...article, categorySlug: cat.id, topicId: topic.id, subTopicId: sub.id },
-              meta: hidden,
+              meta: routeMeta,
             })
           })
         })
@@ -137,7 +138,7 @@ export function buildRoutes() {
           name: `topic-${cat.id}-${topic.id}`,
           component: () => import('../views/TopicPage.vue'),
           props: { categorySlug: cat.id, topicId: topic.id },
-          meta: hidden,
+          meta: routeMeta,
         })
 
         const articles = getTopicArticles(cat.id, topic.id)
@@ -147,7 +148,7 @@ export function buildRoutes() {
             name: `article-${cat.id}-${topic.id}-${article.slug}`,
             component: () => import('../views/ArticlePage.vue'),
             props: { ...article, categorySlug: cat.id, topicId: topic.id },
-            meta: hidden,
+            meta: routeMeta,
           })
         })
       }

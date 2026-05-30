@@ -2,5 +2,7 @@ node_modules
 dist
 *.local
 .DS_Store
-hidden/
-src/content/hidden/
+protected/
+privated/
+src/content/protected/
+src/content/privated/

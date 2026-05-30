@@ -42,9 +42,9 @@ import { computed } from 'vue'
 import { categories } from '../router'
 import { useAuth } from '../composables/useAuth'
 
-const { isAuthenticated } = useAuth()
+const { canAccess } = useAuth()
 const visibleCategories = computed(() =>
-  categories.filter((c) => !c.hidden || isAuthenticated.value)
+  categories.filter((c) => canAccess(c.level || 'open'))
 )
 </script>
 

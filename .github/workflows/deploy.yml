@@ -22,14 +22,14 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - name: Decrypt hidden content
+      - name: Decrypt restricted content
         env:
           PASS: ${{ secrets.HIDDEN_PASSWORD }}
         if: env.PASS != ''
         run: |
-          mkdir -p src/content/hidden
+          mkdir -p src/content/protected src/content/privated
           openssl enc -d -aes-256-cbc -pbkdf2 -pass "pass:$PASS" \
-            -in hidden-content.enc 2>/dev/null \
+            -in restricted-content.enc 2>/dev/null \
           | tar xzf - -C src/content
       - name: Install dependencies
         run: npm ci

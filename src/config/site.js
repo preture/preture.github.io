@@ -60,12 +60,23 @@ export const categories = [
     ],
   },
   {
-    id: 'hidden',
-    name: '隐藏空间',
+    id: 'protected',
+    name: '保护空间',
     emoji: '🔒',
     color: '#636e72',
     description: '登录后可见',
-    hidden: true,
+    level: 'protected',
+    topics: [
+      { id: 'python-learn', name: 'python学习课件', description: '记得学习课件内容及课程安排' },
+    ],
+  },
+  {
+    id: 'privated',
+    name: '私人空间',
+    emoji: '🔒',
+    color: '#636e72',
+    description: '登录后可见',
+    level: 'privated',
     topics: [
       { id: 'private-notes', name: '私人笔记', description: '个人私密笔记' },
     ],
@@ -88,9 +99,9 @@ export function findSubTopic(categorySlug, topicSlug, subSlug) {
   return topic.subTopics.find((s) => s.id === subSlug) || null
 }
 
-export function isCategoryHidden(categorySlug) {
+export function getCategoryLevel(categorySlug) {
   const cat = findCategory(categorySlug)
-  return cat?.hidden || false
+  return cat?.level || 'open'
 }
 
 export const giscus = {

@@ -23,9 +23,10 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  if (to.meta?.hidden) {
-    const { isAuthenticated, requireAuth } = useAuth()
-    if (!isAuthenticated.value) {
+  const level = to.meta?.level
+  if (level) {
+    const { canAccess, requireAuth } = useAuth()
+    if (!canAccess(level)) {
       requireAuth(to.fullPath)
       return false
     }

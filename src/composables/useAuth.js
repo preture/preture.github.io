@@ -5,7 +5,12 @@ const AUTH_KEY = 'preture-auth'
 
 const _authenticated = ref(sessionStorage.getItem(AUTH_KEY) === 'true')
 const _currentUser = ref(sessionStorage.getItem('preture-user') || '')
+const _currentRole = ref(sessionStorage.getItem('preture-role') || '')
 const _pendingRoute = ref(null)
+
+function findUser(username) {
+  return users.find((u) => u.username === username) || null
+}
 
 async function sha256(str) {
   const enc = new TextEncoder().encode(str)
@@ -24,8 +29,10 @@ export function useAuth() {
     if (user) {
       sessionStorage.setItem(AUTH_KEY, 'true')
       sessionStorage.setItem('preture-user', username)
+      sessionStorage.setItem('preture-role', user.role || '')
       _authenticated.value = true
       _currentUser.value = username
+      _currentRole.value = user.role || ''
       return true
     }
     return false
@@ -34,14 +41,28 @@ export function useAuth() {
   function logout() {
     sessionStorage.removeItem(AUTH_KEY)
     sessionStorage.removeItem('preture-user')
+    sessionStorage.removeItem('preture-role')
     _authenticated.value = false
     _currentUser.value = ''
+    _currentRole.value = ''
   }
 
   const isAuthenticated = computed(() => _authenticated.value && users.length > 0)
   const currentUser = computed(() => _currentUser.value)
+  const currentRole = computed(() => _currentRole.value)
   const isConfigured = computed(() => users.length > 0)
   const pendingRoute = computed(() => _pendingRoute.value)
+
+  function canAccess(level) {
+    if (level === 'open') return true
+    if (!isAuthenticated.value) return false
+    if (level === 'protected') return true
+    if (level === 'privated') {
+      const user = findUser(_currentUser.value)
+      return user?.role === 'admin'
+    }
+    return false
+  }
 
   function requireAuth(path) {
     _pendingRoute.value = path
@@ -55,7 +76,9 @@ export function useAuth() {
     isAuthenticated,
     isConfigured,
     currentUser,
+    currentRole,
     pendingRoute,
+    canAccess,
     login,
     logout,
     requireAuth,
