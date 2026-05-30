@@ -1,11 +1,11 @@
 <template>
-  <div class="giscus-wrapper">
+  <div class="giscus-wrapper" :style="{ minHeight: loaded ? 'auto' : '200px' }">
     <div class="giscus" ref="container"></div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { giscus as cfg } from '../config/site'
 
 const props = defineProps({
@@ -13,6 +13,7 @@ const props = defineProps({
 })
 
 const container = ref(null)
+const loaded = ref(false)
 
 function loadGiscus() {
   if (!cfg.repoId || !cfg.categoryId) {
@@ -20,8 +21,7 @@ function loadGiscus() {
     return
   }
 
-  if (container.value.querySelector('iframe')) return
-
+  loaded.value = true
   const script = document.createElement('script')
   script.src = 'https://giscus.app/client.js'
   script.setAttribute('data-repo', cfg.repo)
@@ -41,12 +41,11 @@ function loadGiscus() {
   container.value.appendChild(script)
 }
 
-onMounted(loadGiscus)
-watch(() => props.term, () => {
-  // reload giscus when term changes
-  if (container.value) {
-    container.value.innerHTML = ''
-    loadGiscus()
+onMounted(() => {
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(() => loadGiscus(), { timeout: 200 })
+  } else {
+    setTimeout(() => loadGiscus(), 200)
   }
 })
 </script>
@@ -56,5 +55,6 @@ watch(() => props.term, () => {
   margin-top: 3rem;
   padding-top: 2rem;
   border-top: 1px solid var(--border-light);
+  transition: min-height 0.3s;
 }
 </style>
