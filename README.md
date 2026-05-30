@@ -249,12 +249,12 @@ node -e "console.log(require('crypto').createHash('sha256').update('你的密码
 
 ### 隐藏笔记加密
 
-隐藏内容 (`src/content/hidden/`) 不直接提交到 git，而是加密归档，确保公开仓库中不可读。
+隐藏内容 (`hidden/`) 不直接提交到 git，而是加密归档，确保公开仓库中不可读。
 
 使用脚本 `scripts/encrypt-hidden.sh` 操作：
 
 ```bash
-# 在 src/content/hidden/ 下创建笔记后，加密：
+# 在 hidden/ 下创建笔记后，加密：
 ./scripts/encrypt-hidden.sh encrypt
 
 # 提交加密文件（不提交原始 markdown）

@@ -2,13 +2,14 @@
 set -e
 
 ENCRYPTED_FILE="hidden-content.enc"
-HIDDEN_DIR="src/content/hidden"
+SOURCE_DIR="hidden"
+OUTPUT_DIR="src/content/hidden"
 
 case "${1:-}" in
   encrypt)
-    if [ ! -d "$HIDDEN_DIR" ] || [ -z "$(ls -A "$HIDDEN_DIR" 2>/dev/null)" ]; then
-      echo "❌ $HIDDEN_DIR 目录不存在或为空"
-      echo "   请先在 $HIDDEN_DIR 下创建笔记文件"
+    if [ ! -d "$SOURCE_DIR" ] || [ -z "$(ls -A "$SOURCE_DIR" 2>/dev/null)" ]; then
+      echo "❌ $SOURCE_DIR 目录不存在或为空"
+      echo "   请先在 $SOURCE_DIR 下创建笔记文件"
       exit 1
     fi
     read -s -p "🔐 输入加密密码: " PASS
@@ -19,7 +20,7 @@ case "${1:-}" in
       echo "❌ 两次密码不一致"
       exit 1
     fi
-    tar czf - -C src/content hidden \
+    tar czf - -C . "$SOURCE_DIR" \
       | openssl enc -aes-256-cbc -pbkdf2 -pass "pass:$PASS" \
       -out "$ENCRYPTED_FILE"
     echo "✅ 已加密为 $ENCRYPTED_FILE ($(du -h "$ENCRYPTED_FILE" | cut -f1))"
@@ -32,18 +33,18 @@ case "${1:-}" in
     fi
     read -s -p "🔐 输入解密密码: " PASS
     echo
-    mkdir -p "$HIDDEN_DIR"
+    mkdir -p "$OUTPUT_DIR"
     openssl enc -d -aes-256-cbc -pbkdf2 -pass "pass:$PASS" \
       -in "$ENCRYPTED_FILE" 2>/dev/null \
     | tar xzf - -C src/content
-    echo "✅ 已解密到 $HIDDEN_DIR/"
+    echo "✅ 已解密到 $OUTPUT_DIR/"
     ;;
 
   *)
     echo "用法: $0 {encrypt|decrypt}"
     echo
-    echo "  encrypt   将 $HIDDEN_DIR/ 加密为 $ENCRYPTED_FILE"
-    echo "  decrypt   将 $ENCRYPTED_FILE 解密到 $HIDDEN_DIR/"
+    echo "  encrypt   将 $SOURCE_DIR/ 加密为 $ENCRYPTED_FILE"
+    echo "  decrypt   将 $ENCRYPTED_FILE 解密到 $OUTPUT_DIR/"
     exit 1
     ;;
 esac
