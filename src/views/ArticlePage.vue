@@ -17,7 +17,10 @@
         <TableOfContents :headings="headings" />
       </aside>
       <div class="content-col">
-        <MarkdownRenderer ref="mdRef" :content="content" />
+        <Suspense>
+          <MarkdownRenderer ref="mdRef" :content="content" />
+          <template #fallback><div class="loading-content">加载中...</div></template>
+        </Suspense>
 
         <GiscusComment v-if="!isRestricted" :term="commentTerm" />
       </div>
@@ -31,9 +34,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, defineAsyncComponent, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import MarkdownRenderer from '../components/MarkdownRenderer.vue'
+
+const MarkdownRenderer = defineAsyncComponent(() => import('../components/MarkdownRenderer.vue'))
 import TableOfContents from '../components/TableOfContents.vue'
 import GiscusComment from '../components/GiscusComment.vue'
 import { findCategory, findTopic, findSubTopic, getCategoryLevel } from '../config/site'
