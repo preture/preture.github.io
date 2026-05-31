@@ -1,10 +1,28 @@
 import { categories, findCategory, findTopic } from '../config/site'
 
-const mdModules = import.meta.glob('/open/**/*.md', {
+const mdModules = import.meta.glob('/{open,protected,privated}/**/*.md', {
   eager: true,
   query: '?raw',
   import: 'default',
 })
+
+function parseFrontmatter(content) {
+  const match = content.match(/^---\s*\n([\s\S]*?)\n---\s*\n/)
+  if (!match) return { data: {}, content }
+
+  const data = {}
+  for (const line of match[1].split('\n')) {
+    const kv = line.match(/^\s*(\w+)\s*:\s*(.+)\s*$/)
+    if (kv) {
+      let val = kv[2].trim()
+      if (/^\d+$/.test(val)) val = parseInt(val, 10)
+      else if (val === 'true') val = true
+      else if (val === 'false') val = false
+      data[kv[1].trim()] = val
+    }
+  }
+  return { data, content: content.slice(match[0].length) }
+}
 
 function extractTitle(content) {
   const match = content.match(/^#\s+(.+)/m)
@@ -15,28 +33,45 @@ const articlesByTopic = {}
 const articlesBySubTopic = {}
 
 for (const [filePath, content] of Object.entries(mdModules)) {
-  const relativePath = filePath.replace('/open/', '').replace(/\.md$/, '')
-  const parts = relativePath.split('/')
+  const segments = filePath.replace(/^\//, '').replace(/\.md$/, '').split('/')
+  const isOpen = segments[0] === 'open'
+  const offset = isOpen ? 1 : 0
+  const { data, content: cleanContent } = parseFrontmatter(content)
+  const order = data.order !== undefined ? data.order : Infinity
 
-  if (parts.length === 3) {
-    const [catSlug, topicSlug, articleSlug] = parts
+  if (segments.length === 3 + offset) {
+    const catSlug = segments[offset]
+    const topicSlug = segments[1 + offset]
+    const articleSlug = segments[2 + offset]
     const key = `${catSlug}/${topicSlug}`
     if (!articlesByTopic[key]) articlesByTopic[key] = []
     articlesByTopic[key].push({
       slug: articleSlug,
-      title: extractTitle(content),
-      content,
+      title: extractTitle(cleanContent),
+      content: cleanContent,
+      order,
     })
-  } else if (parts.length === 4) {
-    const [catSlug, topicSlug, subSlug, articleSlug] = parts
+  } else if (segments.length === 4 + offset) {
+    const catSlug = segments[offset]
+    const topicSlug = segments[1 + offset]
+    const subSlug = segments[2 + offset]
+    const articleSlug = segments[3 + offset]
     const key = `${catSlug}/${topicSlug}/${subSlug}`
     if (!articlesBySubTopic[key]) articlesBySubTopic[key] = []
     articlesBySubTopic[key].push({
       slug: articleSlug,
-      title: extractTitle(content),
-      content,
+      title: extractTitle(cleanContent),
+      content: cleanContent,
+      order,
     })
   }
+}
+
+for (const key of Object.keys(articlesByTopic)) {
+  articlesByTopic[key].sort((a, b) => a.order - b.order)
+}
+for (const key of Object.keys(articlesBySubTopic)) {
+  articlesBySubTopic[key].sort((a, b) => a.order - b.order)
 }
 
 export function getTopicArticles(categorySlug, topicSlug) {
