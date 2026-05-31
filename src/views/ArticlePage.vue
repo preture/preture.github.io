@@ -13,16 +13,23 @@
     </nav>
 
     <div class="article-layout">
-      <aside class="toc-col" v-if="headings.length">
+      <aside class="toc-col" v-if="headings.length && viewMode === 'markdown'">
         <TableOfContents :headings="headings" />
       </aside>
       <div class="content-col">
-        <Suspense>
+        <div class="view-toggle">
+          <button :class="{ active: viewMode === 'markdown' }" @click="viewMode = 'markdown'">原文</button>
+          <button :class="{ active: viewMode === 'mindmap' }" @click="viewMode = 'mindmap'">思维导图</button>
+        </div>
+
+        <Suspense v-if="viewMode === 'markdown'">
           <MarkdownRenderer ref="mdRef" :content="content" />
           <template #fallback><div class="loading-content">加载中...</div></template>
         </Suspense>
 
-        <GiscusComment v-if="!isRestricted" :term="commentTerm" />
+        <MindMapViewer v-else :content="content" />
+
+        <GiscusComment v-if="!isRestricted && viewMode === 'markdown'" :term="commentTerm" />
       </div>
     </div>
 
@@ -38,6 +45,7 @@ import { ref, computed, watch, defineAsyncComponent, onMounted, onUnmounted } fr
 import { useRoute } from 'vue-router'
 
 const MarkdownRenderer = defineAsyncComponent(() => import('../components/MarkdownRenderer.vue'))
+import MindMapViewer from '../components/MindMapViewer.vue'
 import TableOfContents from '../components/TableOfContents.vue'
 import GiscusComment from '../components/GiscusComment.vue'
 import { findCategory, findTopic, findSubTopic, getCategoryLevel } from '../config/site'
@@ -52,6 +60,7 @@ const props = defineProps({
 const route = useRoute()
 const mdRef = ref(null)
 const headings = ref([])
+const viewMode = ref('markdown')
 
 const showScrollBtns = ref(false)
 
@@ -168,5 +177,38 @@ const commentTerm = computed(() => route.path)
 .scroll-btn:hover {
   transform: scale(1.1);
   color: var(--accent);
+}
+
+.view-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  width: fit-content;
+}
+
+.view-toggle button {
+  padding: 0.4rem 1rem;
+  border: none;
+  background: var(--bg-card);
+  color: var(--text-soft);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.view-toggle button:not(:last-child) {
+  border-right: 1px solid var(--border);
+}
+
+.view-toggle button.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.view-toggle button:not(.active):hover {
+  background: var(--accent-soft);
 }
 </style>
