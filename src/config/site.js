@@ -14,6 +14,7 @@ export const categories = [
           { id: 'python', name: 'Python' },
           { id: 'vue', name: 'Vue' },
           { id: 'flutter', name: 'Flutter' },
+          { id: 'file-formats', name: '文件格式' },
         ],
       },
       { id: 'great-tools', name: '利器清单', description: '优秀工具推荐与使用心得' },
