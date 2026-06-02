@@ -29,7 +29,6 @@
 
         <MindMapViewer v-else :content="content" />
 
-        <GiscusComment v-if="!isRestricted && viewMode === 'markdown'" :term="commentTerm" />
       </div>
     </div>
 
@@ -47,8 +46,7 @@ import { useRoute } from 'vue-router'
 const MarkdownRenderer = defineAsyncComponent(() => import('../components/MarkdownRenderer.vue'))
 import MindMapViewer from '../components/MindMapViewer.vue'
 import TableOfContents from '../components/TableOfContents.vue'
-import GiscusComment from '../components/GiscusComment.vue'
-import { findCategory, findTopic, findSubTopic, getCategoryLevel } from '../config/site'
+import { findCategory, findTopic, findSubTopic } from '../config/site'
 
 const props = defineProps({
   content: { type: String, required: true },
@@ -84,8 +82,7 @@ const topic = computed(() => findTopic(props.categorySlug, props.topicId))
 const subTopic = computed(() =>
   props.subTopicId ? findSubTopic(props.categorySlug, props.topicId, props.subTopicId) : null
 )
-const isRestricted = computed(() => getCategoryLevel(props.categorySlug) !== 'open')
-const commentTerm = computed(() => route.path)
+
 </script>
 
 <style scoped>
