@@ -1,3 +1,6 @@
+---
+order: 3
+---
 # TOML 格式说明
 
 TOML（Tom's Obvious Minimal Language）是一种旨在易于阅读和写入的配置文件格式，语义明确。

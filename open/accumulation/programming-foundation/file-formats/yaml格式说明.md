@@ -1,3 +1,6 @@
+---
+order: 2
+---
 # YAML 格式说明
 
 YAML（YAML Ain't Markup Language）是一种人类可读的数据序列化格式，常用于配置文件。

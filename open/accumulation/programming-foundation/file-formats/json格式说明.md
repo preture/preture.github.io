@@ -1,3 +1,6 @@
+---
+order: 1
+---
 # JSON 格式说明
 
 JSON（JavaScript Object Notation）是一种轻量级数据交换格式，易于人阅读和编写，也易于机器解析和生成。

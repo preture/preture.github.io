@@ -1,3 +1,4 @@
+.ieda
 node_modules
 dist
 *.local
