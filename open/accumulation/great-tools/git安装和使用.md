@@ -131,3 +131,70 @@ git merge feature/my-feature
 # 5. 推送到远程
 git push origin main
 ```
+
+## 常用免费仓库托管平台
+
+### GitHub
+
+[GitHub](https://github.com) 是全球最大的代码托管平台，基于 Git，2018 年被微软收购。
+
+**核心特性：**
+- 无限免费公开仓库，私有仓库免费（限制协作者数）
+- Pull Request 流程——开源协作的标准方式
+- GitHub Actions——内置 CI/CD，自动测试、构建、部署
+- GitHub Pages——免费托管静态网站
+- Issue / Discussions / Wiki——完整的项目管理功能
+
+**创建仓库并推送：**
+
+```bash
+# 在 GitHub 网页上点 "New repository" 创建空仓库
+
+# 本地已有项目，关联远程仓库
+git remote add origin https://github.com/你的用户名/仓库名.git
+git branch -M main
+git push -u origin main
+
+# 或从零开始
+git clone https://github.com/你的用户名/仓库名.git
+cd 仓库名
+# ...开始写代码...
+```
+
+### Gitee
+
+[Gitee](https://gitee.com)（码云）是国内的代码托管平台，由开源中国（OSChina）推出，功能和 GitHub 类似，但服务器在国内，访问速度更快。
+
+**核心特性：**
+- 无限免费公开仓库，私有仓库免费（限制容量）
+- 国内访问速度快，无需翻墙
+- Gitee Pages——免费托管静态网站
+- Gitee Go——内置 CI/CD
+- 支持从 GitHub 导入仓库（镜像同步）
+
+**创建仓库并推送：**
+
+```bash
+# 在 Gitee 网页上点 "新建仓库" 创建空仓库
+
+# 本地已有项目，关联远程仓库
+git remote add origin https://gitee.com/你的用户名/仓库名.git
+git branch -M main
+git push -u origin main
+
+# 从 GitHub 导入：Gitee 提供 "从 GitHub/GitLab 导入仓库" 功能
+```
+
+### GitHub vs Gitee 对比
+
+| 对比项 | GitHub | Gitee |
+|--------|--------|-------|
+| 服务器位置 | 国外 | 国内 |
+| 访问速度 | 国内较慢，需代理 | 国内快速 |
+| 免费私有仓库 | 有限制 | 有限制 |
+| CI/CD | GitHub Actions | Gitee Go |
+| 静态 Pages | GitHub Pages | Gitee Pages |
+| 开源生态 | 全球最大 | 国内为主 |
+| 社区活跃度 | 极高 | 国内活跃 |
+
+选择建议：**面向全球开源的项目放 GitHub，国内项目或追求访问速度的放 Gitee，也可以两边都放。**
