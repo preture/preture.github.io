@@ -47,12 +47,12 @@ const md = new MarkdownIt({
     if (lang && hljs.getLanguage(lang)) {
       try {
         const highlighted = hljs.highlight(str, { language: lang }).value
-        return `<div class="code-block-wrapper">${btn}<pre class="hljs"><code>${highlighted}</code></pre></div>`
+        return `<pre class="hljs">${btn}<code>${highlighted}</code></pre>`
       } catch {
         // fallthrough
       }
     }
-    return `<div class="code-block-wrapper">${btn}<pre class="hljs"><code>${escaped}</code></pre></div>`
+    return `<pre class="hljs">${btn}<code>${escaped}</code></pre>`
   },
 })
 
@@ -262,13 +262,16 @@ function onRootClick(e) {
 }
 
 /* ---- copy button ---- */
-.code-block-wrapper {
+.markdown-body pre.hljs {
   position: relative;
-  margin-bottom: 1.25rem;
+  padding: 0;
+  overflow: visible;
 }
 
-.code-block-wrapper pre {
-  margin-bottom: 0;
+.markdown-body pre.hljs code {
+  display: block;
+  padding: 1.25rem;
+  overflow-x: auto;
 }
 
 .copy-btn {
@@ -290,7 +293,7 @@ function onRootClick(e) {
   font-family: inherit;
 }
 
-.code-block-wrapper:hover .copy-btn {
+pre.hljs:hover .copy-btn {
   opacity: 1;
 }
 
