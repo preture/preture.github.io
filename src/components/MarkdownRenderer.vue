@@ -41,15 +41,18 @@ const md = new MarkdownIt({
   linkify: true,
   typographer: true,
   highlight(str, lang) {
+    const escaped = md.utils.escapeHtml(str)
+    const encoded = btoa(encodeURIComponent(str))
+    const btn = `<button class="copy-btn" data-code="${encoded}" title="复制代码">复制</button>`
     if (lang && hljs.getLanguage(lang)) {
       try {
         const highlighted = hljs.highlight(str, { language: lang }).value
-        return `<pre class="hljs"><code>${highlighted}</code></pre>`
+        return `<div class="code-block-wrapper">${btn}<pre class="hljs"><code>${highlighted}</code></pre></div>`
       } catch {
         // fallthrough
       }
     }
-    return `<pre class="hljs"><code>${md.utils.escapeHtml(str)}</code></pre>`
+    return `<div class="code-block-wrapper">${btn}<pre class="hljs"><code>${escaped}</code></pre></div>`
   },
 })
 
@@ -92,6 +95,26 @@ const headings = computed(() => mdResult.value.headings)
 defineExpose({ headings })
 
 function onRootClick(e) {
+  const btn = e.target.closest('.copy-btn')
+  if (btn) {
+    const encoded = btn.getAttribute('data-code')
+    const orig = btn.textContent
+    try {
+      const code = decodeURIComponent(atob(encoded))
+      navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = '已复制'
+        setTimeout(() => { btn.textContent = orig }, 2000)
+      }).catch(() => {
+        btn.textContent = '复制失败'
+        setTimeout(() => { btn.textContent = orig }, 2000)
+      })
+    } catch {
+      btn.textContent = '复制失败'
+      setTimeout(() => { btn.textContent = '复制' }, 2000)
+    }
+    return
+  }
+
   const a = e.target.closest('a')
   if (!a || !a.hasAttribute('href')) return
   const href = a.getAttribute('href')
@@ -236,6 +259,45 @@ function onRootClick(e) {
 .markdown-body ::selection {
   background: var(--accent);
   color: var(--bg-body);
+}
+
+/* ---- copy button ---- */
+.code-block-wrapper {
+  position: relative;
+  margin-bottom: 1.25rem;
+}
+
+.code-block-wrapper pre {
+  margin-bottom: 0;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  background: var(--bg-body);
+  color: var(--text-soft);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s;
+  user-select: none;
+  font-family: inherit;
+}
+
+.code-block-wrapper:hover .copy-btn {
+  opacity: 1;
+}
+
+.copy-btn:hover {
+  background: var(--accent);
+  color: var(--bg-body);
+  border-color: var(--accent);
 }
 
 /* ---- syntax highlighting (light) ---- */
