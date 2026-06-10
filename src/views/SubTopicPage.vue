@@ -34,9 +34,9 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { findCategory, findTopic, findSubTopic } from '../config/site'
-import { getSubTopicArticles } from '../content'
+import { getSubTopicArticles, ensureSubTopicTitles } from '../content'
 
 const props = defineProps({
   categorySlug: { type: String, required: true },
@@ -47,7 +47,16 @@ const props = defineProps({
 const category = computed(() => findCategory(props.categorySlug))
 const topic = computed(() => findTopic(props.categorySlug, props.topicId))
 const subTopic = computed(() => findSubTopic(props.categorySlug, props.topicId, props.subTopicId))
-const articles = computed(() => getSubTopicArticles(props.categorySlug, props.topicId, props.subTopicId))
+
+const articles = ref([])
+const titlesReady = ref(false)
+
+onMounted(async () => {
+  articles.value = getSubTopicArticles(props.categorySlug, props.topicId, props.subTopicId)
+  await ensureSubTopicTitles(props.categorySlug, props.topicId, props.subTopicId)
+  articles.value = [...getSubTopicArticles(props.categorySlug, props.topicId, props.subTopicId)]
+  titlesReady.value = true
+})
 </script>
 
 <style scoped>

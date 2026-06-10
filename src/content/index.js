@@ -1,7 +1,6 @@
 import { categories, findCategory, findTopic } from '../config/site'
 
 const openModules = import.meta.glob('/open/**/*.md', {
-  eager: true,
   query: '?raw',
   import: 'default',
 })
@@ -44,85 +43,88 @@ function articleKey(segments, offset) {
 
 const articlesByTopic = {}
 const articlesBySubTopic = {}
+const _openLoaders = {}
 const _openContentCache = {}
 const _restrictedLoaders = {}
 const _restrictedContentCache = {}
+const _openMetaLoaded = {}
 
-function addArticle(segments, offset, cleanContent, order) {
+function addArticleMeta(segments, offset, articleSlug) {
   const catSlug = segments[offset]
   const topicSlug = segments[1 + offset]
-  const articleSlug = segments[2 + offset]
   const isSubTopic = segments.length === 4 + offset
 
   if (isSubTopic) {
     const subSlug = segments[2 + offset]
     const key = `${catSlug}/${topicSlug}/${subSlug}`
     if (!articlesBySubTopic[key]) articlesBySubTopic[key] = []
-    articlesBySubTopic[key].push({
-      slug: segments[3 + offset],
-      title: extractTitle(cleanContent),
-      order,
-      body: bodyExcerpt(cleanContent),
-    })
+    articlesBySubTopic[key].push({ slug: articleSlug, title: '', order: Infinity, body: '' })
   } else {
     const key = `${catSlug}/${topicSlug}`
     if (!articlesByTopic[key]) articlesByTopic[key] = []
-    articlesByTopic[key].push({
-      slug: articleSlug,
-      title: extractTitle(cleanContent),
-      order,
-      body: bodyExcerpt(cleanContent),
-    })
+    articlesByTopic[key].push({ slug: articleSlug, title: '', order: Infinity, body: '' })
   }
 }
 
-for (const [filePath, content] of Object.entries(openModules)) {
+for (const filePath of Object.keys(openModules)) {
   const segments = filePath.replace(/^\//, '').replace(/\.md$/, '').split('/')
   const offset = 1
-  const { data, content: cleanContent } = parseFrontmatter(content)
-  const order = data.order !== undefined ? data.order : Infinity
-
-  _openContentCache[articleKey(segments, offset)] = cleanContent
-  addArticle(segments, offset, cleanContent, order)
-}
-
-for (const [filePath, loader] of Object.entries(restrictedModules)) {
-  const segments = filePath.replace(/^\//, '').replace(/\.md$/, '').split('/')
-  const offset = 1
-  const catSlug = segments[offset]
-  const topicSlug = segments[1 + offset]
-  const articleSlug = segments[2 + offset]
   const key = articleKey(segments, offset)
-
-  _restrictedLoaders[key] = loader
-
-  if (segments.length === 4 + offset) {
-    const subSlug = segments[2 + offset]
-    const mapKey = `${catSlug}/${topicSlug}/${subSlug}`
-    if (!articlesBySubTopic[mapKey]) articlesBySubTopic[mapKey] = []
-    articlesBySubTopic[mapKey].push({
-      slug: segments[3 + offset],
-      title: '',
-      order: Infinity,
-      body: '',
-    })
-  } else {
-    const mapKey = `${catSlug}/${topicSlug}`
-    if (!articlesByTopic[mapKey]) articlesByTopic[mapKey] = []
-    articlesByTopic[mapKey].push({
-      slug: articleSlug,
-      title: '',
-      order: Infinity,
-      body: '',
-    })
-  }
+  _openLoaders[key] = openModules[filePath]
+  addArticleMeta(segments, offset, segments[segments.length - 1])
 }
 
-for (const key of Object.keys(articlesByTopic)) {
-  articlesByTopic[key].sort((a, b) => a.order - b.order)
+for (const filePath of Object.keys(restrictedModules)) {
+  const segments = filePath.replace(/^\//, '').replace(/\.md$/, '').split('/')
+  const offset = 1
+  const key = articleKey(segments, offset)
+  _restrictedLoaders[key] = restrictedModules[filePath]
+  addArticleMeta(segments, offset, segments[segments.length - 1])
 }
-for (const key of Object.keys(articlesBySubTopic)) {
-  articlesBySubTopic[key].sort((a, b) => a.order - b.order)
+
+async function loadOpenMeta(key) {
+  if (_openMetaLoaded[key]) return
+  _openMetaLoaded[key] = true
+  const loader = _openLoaders[key]
+  if (!loader) return
+  const raw = await loader()
+  const { data, content } = parseFrontmatter(raw)
+  const title = extractTitle(content)
+  const body = bodyExcerpt(content)
+  _openContentCache[key] = content
+  return { title, body, order: data.order }
+}
+
+export async function ensureTopicTitles(categorySlug, topicSlug) {
+  const articles = articlesByTopic[`${categorySlug}/${topicSlug}`]
+  if (!articles) return
+  await Promise.all(articles.map(async (a) => {
+    if (a.title) return
+    const key = `${categorySlug}/${topicSlug}/${a.slug}`
+    const meta = await loadOpenMeta(key)
+    if (meta) {
+      a.title = meta.title
+      a.body = meta.body
+      if (meta.order !== undefined) a.order = meta.order
+    }
+  }))
+  articles.sort((a, b) => a.order - b.order)
+}
+
+export async function ensureSubTopicTitles(categorySlug, topicSlug, subSlug) {
+  const articles = articlesBySubTopic[`${categorySlug}/${topicSlug}/${subSlug}`]
+  if (!articles) return
+  await Promise.all(articles.map(async (a) => {
+    if (a.title) return
+    const key = `${categorySlug}/${topicSlug}/${subSlug}/${a.slug}`
+    const meta = await loadOpenMeta(key)
+    if (meta) {
+      a.title = meta.title
+      a.body = meta.body
+      if (meta.order !== undefined) a.order = meta.order
+    }
+  }))
+  articles.sort((a, b) => a.order - b.order)
 }
 
 export function getTopicArticles(categorySlug, topicSlug) {
@@ -156,13 +158,24 @@ export async function loadArticleContent(categorySlug, topicSlug, articleSlug, s
     : `${categorySlug}/${topicSlug}/${articleSlug}`
 
   if (_restrictedContentCache[key]) return _restrictedContentCache[key]
-  if (!_restrictedLoaders[key]) return ''
 
-  const raw = await _restrictedLoaders[key]()
+  const loader = _restrictedLoaders[key]
+  if (!loader) {
+    const openLoader = _openLoaders[key]
+    if (!openLoader) return ''
+    if (!_openContentCache[key]) {
+      const meta = await loadOpenMeta(key)
+      return meta ? _openContentCache[key] : ''
+    }
+    return _openContentCache[key]
+  }
+
+  const raw = await loader()
   const { content: cleanContent } = parseFrontmatter(raw)
   _restrictedContentCache[key] = cleanContent
 
-  const articles = subSlug
+  const isSub = !!subSlug
+  const articles = isSub
     ? articlesBySubTopic[`${categorySlug}/${topicSlug}/${subSlug}`]
     : articlesByTopic[`${categorySlug}/${topicSlug}`]
   if (articles) {
@@ -217,6 +230,12 @@ export function buildSearchIndex() {
 
   return result
 }
+
+const _openMetaInit = (async () => {
+  await Promise.all(Object.keys(_openLoaders).map(async (key) => {
+    if (!_openMetaLoaded[key]) await loadOpenMeta(key)
+  }))
+})()
 
 export function buildRoutes() {
   const routes = []

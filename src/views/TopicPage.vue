@@ -51,9 +51,9 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { findCategory, findTopic } from '../config/site'
-import { getTopicArticles, getSubTopicArticles } from '../content'
+import { getTopicArticles, getSubTopicArticles, ensureTopicTitles, ensureSubTopicTitles } from '../content'
 
 const props = defineProps({
   categorySlug: { type: String, required: true },
@@ -62,7 +62,22 @@ const props = defineProps({
 
 const category = computed(() => findCategory(props.categorySlug))
 const topic = computed(() => findTopic(props.categorySlug, props.topicId))
-const articles = computed(() => getTopicArticles(props.categorySlug, props.topicId))
+
+const articles = ref([])
+const titlesReady = ref(false)
+
+onMounted(async () => {
+  articles.value = getTopicArticles(props.categorySlug, props.topicId)
+  if (topic.value?.subTopics) {
+    await Promise.all(topic.value.subTopics.map((sub) =>
+      ensureSubTopicTitles(props.categorySlug, props.topicId, sub.id)
+    ))
+  } else {
+    await ensureTopicTitles(props.categorySlug, props.topicId)
+  }
+  articles.value = [...getTopicArticles(props.categorySlug, props.topicId)]
+  titlesReady.value = true
+})
 
 function articleCount(subId) {
   const count = getSubTopicArticles(props.categorySlug, props.topicId, subId).length
