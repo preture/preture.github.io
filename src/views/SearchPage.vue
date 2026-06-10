@@ -38,7 +38,7 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import Fuse from 'fuse.js'
-import { buildSearchIndex } from '../content'
+import { buildSearchIndex, openMetaReady } from '../content'
 import { getCategoryLevel } from '../config/site'
 import { useAuth } from '../composables/useAuth'
 
@@ -46,21 +46,11 @@ const query = ref('')
 const inputRef = ref(null)
 const { canAccess } = useAuth()
 
-const fuse = computed(() => {
-  const items = buildSearchIndex()
-  return new Fuse(items, {
-    keys: ['title', 'body'],
-    threshold: 0.35,
-    includeScore: true,
-    minMatchCharLength: 1,
-  })
-})
-
-const allArticles = computed(() => {
-  return buildSearchIndex().filter((item) => canAccess(getCategoryLevel(item.category)))
-})
+const fuse = ref(null)
+const allArticles = ref([])
 
 const results = computed(() => {
+  if (!fuse.value) return []
   if (!query.value.trim()) return allArticles.value
   return fuse.value
     .search(query.value.trim())
@@ -68,7 +58,16 @@ const results = computed(() => {
     .filter((item) => canAccess(getCategoryLevel(item.category)))
 })
 
-onMounted(() => {
+onMounted(async () => {
+  await openMetaReady
+  const items = buildSearchIndex()
+  fuse.value = new Fuse(items, {
+    keys: ['title', 'body'],
+    threshold: 0.35,
+    includeScore: true,
+    minMatchCharLength: 1,
+  })
+  allArticles.value = items.filter((item) => canAccess(getCategoryLevel(item.category)))
   nextTick(() => inputRef.value?.focus())
 })
 </script>

@@ -41,3 +41,20 @@ open/{category}/{topic}/{sub-topic}/{article}.md
 ```
 
 Article title extracted from first `# ` heading. Config in `src/config/site.js`.
+
+## Performance Optimization (完成)
+
+- All Markdown content loaded lazily via `import.meta.glob({ query: '?raw' })` (no `eager`).
+- Main JS bundle reduced from 1,025 KB → 124 KB (48 KB gzip).
+- MindMapViewer (`markmap-lib`) loaded via `defineAsyncComponent` (577 KB separate chunk).
+- CSS `<link>` placed before `<script>` in built HTML via Vite plugin.
+- Article metadata (title, body) populated **asynchronously**:
+  - `loadOpenMeta(key)` — loads/chunks markdown, extracts title/body/order.
+  - `setArticleMeta(articles, slug, meta)` — updates article in-place.
+  - `ensureTopicTitles` / `ensureSubTopicTitles` — called by TopicPage/SubTopicPage on mount.
+  - `_openMetaInit` (top-level IIFE) — preloads all `open/` metadata in background; exported as `openMetaReady`.
+  - `loadArticleContent` — loads full content for ArticlePage; for `open/` articles delegates to `loadOpenMeta`.
+  - `loadOpenMeta` handles cached keys (returns title/body/order from caches on repeated calls).
+  - `_openOrderCache` — stores `order` from frontmatter for cache-friendly retrieval.
+- SearchPage waits for `openMetaReady` before building the Fuse.js index.
+- TopicPage/SubTopicPage create new array reference (`[...arr]`) after loading titles to trigger Vue reactivity.

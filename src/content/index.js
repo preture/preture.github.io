@@ -48,6 +48,7 @@ const _openContentCache = {}
 const _restrictedLoaders = {}
 const _restrictedContentCache = {}
 const _openMetaLoaded = {}
+const _openOrderCache = {}
 
 function addArticleMeta(segments, offset, articleSlug) {
   const catSlug = segments[offset]
@@ -83,7 +84,11 @@ for (const filePath of Object.keys(restrictedModules)) {
 }
 
 async function loadOpenMeta(key) {
-  if (_openMetaLoaded[key]) return
+  if (_openMetaLoaded[key]) {
+    const cached = _openContentCache[key]
+    if (cached) return { title: extractTitle(cached), body: bodyExcerpt(cached), order: _openOrderCache[key] }
+    return
+  }
   _openMetaLoaded[key] = true
   const loader = _openLoaders[key]
   if (!loader) return
@@ -92,7 +97,17 @@ async function loadOpenMeta(key) {
   const title = extractTitle(content)
   const body = bodyExcerpt(content)
   _openContentCache[key] = content
+  _openOrderCache[key] = data.order
   return { title, body, order: data.order }
+}
+
+async function setArticleMeta(articles, articleSlug, meta) {
+  if (!meta) return
+  const a = articles?.find((x) => x.slug === articleSlug)
+  if (!a) return
+  a.title = meta.title
+  a.body = meta.body
+  if (meta.order !== undefined) a.order = meta.order
 }
 
 export async function ensureTopicTitles(categorySlug, topicSlug) {
@@ -102,11 +117,7 @@ export async function ensureTopicTitles(categorySlug, topicSlug) {
     if (a.title) return
     const key = `${categorySlug}/${topicSlug}/${a.slug}`
     const meta = await loadOpenMeta(key)
-    if (meta) {
-      a.title = meta.title
-      a.body = meta.body
-      if (meta.order !== undefined) a.order = meta.order
-    }
+    await setArticleMeta(articles, a.slug, meta)
   }))
   articles.sort((a, b) => a.order - b.order)
 }
@@ -118,11 +129,7 @@ export async function ensureSubTopicTitles(categorySlug, topicSlug, subSlug) {
     if (a.title) return
     const key = `${categorySlug}/${topicSlug}/${subSlug}/${a.slug}`
     const meta = await loadOpenMeta(key)
-    if (meta) {
-      a.title = meta.title
-      a.body = meta.body
-      if (meta.order !== undefined) a.order = meta.order
-    }
+    await setArticleMeta(articles, a.slug, meta)
   }))
   articles.sort((a, b) => a.order - b.order)
 }
@@ -232,10 +239,27 @@ export function buildSearchIndex() {
 }
 
 const _openMetaInit = (async () => {
-  await Promise.all(Object.keys(_openLoaders).map(async (key) => {
-    if (!_openMetaLoaded[key]) await loadOpenMeta(key)
-  }))
+  for (const key of Object.keys(_openLoaders)) {
+    const meta = await loadOpenMeta(key)
+    if (!meta) continue
+    const parts = key.split('/')
+    if (parts.length === 3) {
+      const [catSlug, topicSlug, articleSlug] = parts
+      await setArticleMeta(articlesByTopic[`${catSlug}/${topicSlug}`], articleSlug, meta)
+    } else if (parts.length === 4) {
+      const [catSlug, topicSlug, subSlug, articleSlug] = parts
+      await setArticleMeta(articlesBySubTopic[`${catSlug}/${topicSlug}/${subSlug}`], articleSlug, meta)
+    }
+  }
+  for (const key of Object.keys(articlesByTopic)) {
+    articlesByTopic[key].sort((a, b) => a.order - b.order)
+  }
+  for (const key of Object.keys(articlesBySubTopic)) {
+    articlesBySubTopic[key].sort((a, b) => a.order - b.order)
+  }
 })()
+
+export const openMetaReady = _openMetaInit
 
 export function buildRoutes() {
   const routes = []
