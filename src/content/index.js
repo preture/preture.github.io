@@ -1,7 +1,12 @@
 import { categories, findCategory, findTopic } from '../config/site'
 
-const mdModules = import.meta.glob('/{open,protected,privated}/**/*.md', {
+const openModules = import.meta.glob('/open/**/*.md', {
   eager: true,
+  query: '?raw',
+  import: 'default',
+})
+
+const restrictedModules = import.meta.glob('/{protected,privated}/**/*.md', {
   query: '?raw',
   import: 'default',
 })
@@ -29,40 +34,86 @@ function extractTitle(content) {
   return match ? match[1].trim() : 'Untitled'
 }
 
+function bodyExcerpt(content) {
+  return content.replace(/^#\s+.+$/m, '').slice(0, 500)
+}
+
+function articleKey(segments, offset) {
+  return segments.slice(offset).join('/')
+}
+
 const articlesByTopic = {}
 const articlesBySubTopic = {}
+const _openContentCache = {}
+const _restrictedLoaders = {}
+const _restrictedContentCache = {}
 
-for (const [filePath, content] of Object.entries(mdModules)) {
-  const segments = filePath.replace(/^\//, '').replace(/\.md$/, '').split('/')
-  const isOpen = segments[0] === 'open'
-  const offset = isOpen ? 1 : 0
-  const { data, content: cleanContent } = parseFrontmatter(content)
-  const order = data.order !== undefined ? data.order : Infinity
+function addArticle(segments, offset, cleanContent, order) {
+  const catSlug = segments[offset]
+  const topicSlug = segments[1 + offset]
+  const articleSlug = segments[2 + offset]
+  const isSubTopic = segments.length === 4 + offset
 
-  if (segments.length === 3 + offset) {
-    const catSlug = segments[offset]
-    const topicSlug = segments[1 + offset]
-    const articleSlug = segments[2 + offset]
+  if (isSubTopic) {
+    const subSlug = segments[2 + offset]
+    const key = `${catSlug}/${topicSlug}/${subSlug}`
+    if (!articlesBySubTopic[key]) articlesBySubTopic[key] = []
+    articlesBySubTopic[key].push({
+      slug: segments[3 + offset],
+      title: extractTitle(cleanContent),
+      order,
+      body: bodyExcerpt(cleanContent),
+    })
+  } else {
     const key = `${catSlug}/${topicSlug}`
     if (!articlesByTopic[key]) articlesByTopic[key] = []
     articlesByTopic[key].push({
       slug: articleSlug,
       title: extractTitle(cleanContent),
-      content: cleanContent,
       order,
+      body: bodyExcerpt(cleanContent),
     })
-  } else if (segments.length === 4 + offset) {
-    const catSlug = segments[offset]
-    const topicSlug = segments[1 + offset]
+  }
+}
+
+for (const [filePath, content] of Object.entries(openModules)) {
+  const segments = filePath.replace(/^\//, '').replace(/\.md$/, '').split('/')
+  const offset = 1
+  const { data, content: cleanContent } = parseFrontmatter(content)
+  const order = data.order !== undefined ? data.order : Infinity
+
+  _openContentCache[articleKey(segments, offset)] = cleanContent
+  addArticle(segments, offset, cleanContent, order)
+}
+
+for (const [filePath, loader] of Object.entries(restrictedModules)) {
+  const segments = filePath.replace(/^\//, '').replace(/\.md$/, '').split('/')
+  const offset = 1
+  const catSlug = segments[offset]
+  const topicSlug = segments[1 + offset]
+  const articleSlug = segments[2 + offset]
+  const key = articleKey(segments, offset)
+
+  _restrictedLoaders[key] = loader
+
+  if (segments.length === 4 + offset) {
     const subSlug = segments[2 + offset]
-    const articleSlug = segments[3 + offset]
-    const key = `${catSlug}/${topicSlug}/${subSlug}`
-    if (!articlesBySubTopic[key]) articlesBySubTopic[key] = []
-    articlesBySubTopic[key].push({
+    const mapKey = `${catSlug}/${topicSlug}/${subSlug}`
+    if (!articlesBySubTopic[mapKey]) articlesBySubTopic[mapKey] = []
+    articlesBySubTopic[mapKey].push({
+      slug: segments[3 + offset],
+      title: '',
+      order: Infinity,
+      body: '',
+    })
+  } else {
+    const mapKey = `${catSlug}/${topicSlug}`
+    if (!articlesByTopic[mapKey]) articlesByTopic[mapKey] = []
+    articlesByTopic[mapKey].push({
       slug: articleSlug,
-      title: extractTitle(cleanContent),
-      content: cleanContent,
-      order,
+      title: '',
+      order: Infinity,
+      body: '',
     })
   }
 }
@@ -92,6 +143,39 @@ export function getSubTopicArticle(categorySlug, topicSlug, subSlug, articleSlug
   return articles.find((a) => a.slug === articleSlug) || null
 }
 
+export function getArticleContent(categorySlug, topicSlug, articleSlug, subSlug) {
+  const key = subSlug
+    ? `${categorySlug}/${topicSlug}/${subSlug}/${articleSlug}`
+    : `${categorySlug}/${topicSlug}/${articleSlug}`
+  return _openContentCache[key] || _restrictedContentCache[key] || ''
+}
+
+export async function loadArticleContent(categorySlug, topicSlug, articleSlug, subSlug) {
+  const key = subSlug
+    ? `${categorySlug}/${topicSlug}/${subSlug}/${articleSlug}`
+    : `${categorySlug}/${topicSlug}/${articleSlug}`
+
+  if (_restrictedContentCache[key]) return _restrictedContentCache[key]
+  if (!_restrictedLoaders[key]) return ''
+
+  const raw = await _restrictedLoaders[key]()
+  const { content: cleanContent } = parseFrontmatter(raw)
+  _restrictedContentCache[key] = cleanContent
+
+  const articles = subSlug
+    ? articlesBySubTopic[`${categorySlug}/${topicSlug}/${subSlug}`]
+    : articlesByTopic[`${categorySlug}/${topicSlug}`]
+  if (articles) {
+    const article = articles.find((a) => a.slug === articleSlug)
+    if (article) {
+      article.title = extractTitle(cleanContent)
+      article.body = bodyExcerpt(cleanContent)
+    }
+  }
+
+  return cleanContent
+}
+
 export function buildSearchIndex() {
   const result = []
 
@@ -100,13 +184,14 @@ export function buildSearchIndex() {
     const cat = findCategory(catSlug)
     const topic = findTopic(catSlug, topicSlug)
     for (const a of articles) {
+      if (!a.body) continue
       result.push({
         title: a.title,
         path: `/${catSlug}/${topicSlug}/${a.slug}`,
         category: catSlug,
         categoryName: cat?.name || catSlug,
         topicName: topic?.name || topicSlug,
-        body: a.content.replace(/^#\s+.+$/m, '').slice(0, 500),
+        body: a.body,
       })
     }
   }
@@ -117,6 +202,7 @@ export function buildSearchIndex() {
     const topic = findTopic(catSlug, topicSlug)
     const sub = topic?.subTopics?.find((s) => s.id === subSlug)
     for (const a of articles) {
+      if (!a.body) continue
       result.push({
         title: a.title,
         path: `/${catSlug}/${topicSlug}/${subSlug}/${a.slug}`,
@@ -124,7 +210,7 @@ export function buildSearchIndex() {
         categoryName: cat?.name || catSlug,
         topicName: topic?.name || topicSlug,
         subTopicName: sub?.name || subSlug,
-        body: a.content.replace(/^#\s+.+$/m, '').slice(0, 500),
+        body: a.body,
       })
     }
   }
@@ -172,7 +258,7 @@ export function buildRoutes() {
               path: `/${cat.id}/${topic.id}/${sub.id}/${article.slug}`,
               name: `article-${cat.id}-${topic.id}-${sub.id}-${article.slug}`,
               component: () => import('../views/ArticlePage.vue'),
-              props: { ...article, categorySlug: cat.id, topicId: topic.id, subTopicId: sub.id },
+              props: { articleSlug: article.slug, categorySlug: cat.id, topicId: topic.id, subTopicId: sub.id },
               meta: routeMeta,
             })
           })
@@ -192,7 +278,7 @@ export function buildRoutes() {
             path: `/${cat.id}/${topic.id}/${article.slug}`,
             name: `article-${cat.id}-${topic.id}-${article.slug}`,
             component: () => import('../views/ArticlePage.vue'),
-            props: { ...article, categorySlug: cat.id, topicId: topic.id },
+            props: { articleSlug: article.slug, categorySlug: cat.id, topicId: topic.id },
             meta: routeMeta,
           })
         })

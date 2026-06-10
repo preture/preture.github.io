@@ -22,12 +22,9 @@
           <button :class="{ active: viewMode === 'mindmap' }" @click="viewMode = 'mindmap'">思维导图</button>
         </div>
 
-        <Suspense v-if="viewMode === 'markdown'">
-          <MarkdownRenderer ref="mdRef" :content="content" />
-          <template #fallback><div class="loading-content">加载中...</div></template>
-        </Suspense>
-
-        <MindMapViewer v-else :content="content" />
+        <div v-if="loading" class="loading-content">加载中...</div>
+        <MarkdownRenderer v-else-if="viewMode === 'markdown' && content" ref="mdRef" :content="content" />
+        <MindMapViewer v-else-if="viewMode === 'mindmap' && content" :content="content" />
 
       </div>
     </div>
@@ -44,15 +41,33 @@ import { ref, computed, watch, defineAsyncComponent, onMounted, onUnmounted } fr
 import { useRoute } from 'vue-router'
 
 const MarkdownRenderer = defineAsyncComponent(() => import('../components/MarkdownRenderer.vue'))
-import MindMapViewer from '../components/MindMapViewer.vue'
+const MindMapViewer = defineAsyncComponent(() => import('../components/MindMapViewer.vue'))
 import TableOfContents from '../components/TableOfContents.vue'
 import { findCategory, findTopic, findSubTopic } from '../config/site'
+import { getArticleContent, loadArticleContent } from '../content'
 
 const props = defineProps({
-  content: { type: String, required: true },
+  articleSlug: { type: String, required: true },
   categorySlug: { type: String, required: true },
   topicId: { type: String, required: true },
   subTopicId: { type: String, default: '' },
+})
+
+const content = ref('')
+const loading = ref(true)
+
+onMounted(async () => {
+  const cached = getArticleContent(props.categorySlug, props.topicId, props.articleSlug, props.subTopicId)
+  if (cached) {
+    content.value = cached
+    loading.value = false
+    return
+  }
+  const loaded = await loadArticleContent(props.categorySlug, props.topicId, props.articleSlug, props.subTopicId)
+  if (loaded) {
+    content.value = loaded
+  }
+  loading.value = false
 })
 
 const route = useRoute()
@@ -135,6 +150,13 @@ const subTopic = computed(() =>
   .article-layout {
     gap: 0;
   }
+}
+
+.loading-content {
+  text-align: center;
+  padding: 6rem 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
 }
 
 .scroll-btns {
