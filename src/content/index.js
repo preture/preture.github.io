@@ -77,7 +77,7 @@ for (const filePath of Object.keys(openModules)) {
 
 for (const filePath of Object.keys(restrictedModules)) {
   const segments = filePath.replace(/^\//, '').replace(/\.md$/, '').split('/')
-  const offset = 1
+  const offset = 0
   const key = articleKey(segments, offset)
   _restrictedLoaders[key] = restrictedModules[filePath]
   addArticleMeta(segments, offset, segments[segments.length - 1])
@@ -110,13 +110,26 @@ async function setArticleMeta(articles, articleSlug, meta) {
   if (meta.order !== undefined) a.order = meta.order
 }
 
+async function loadRestrictedMeta(key) {
+  const loader = _restrictedLoaders[key]
+  if (!loader) return
+  const raw = await loader()
+  const { data, content } = parseFrontmatter(raw)
+  _restrictedContentCache[key] = content
+  return {
+    title: extractTitle(content),
+    body: bodyExcerpt(content),
+    order: data.order,
+  }
+}
+
 export async function ensureTopicTitles(categorySlug, topicSlug) {
   const articles = articlesByTopic[`${categorySlug}/${topicSlug}`]
   if (!articles) return
   await Promise.all(articles.map(async (a) => {
     if (a.title) return
     const key = `${categorySlug}/${topicSlug}/${a.slug}`
-    const meta = await loadOpenMeta(key)
+    const meta = await loadOpenMeta(key) || await loadRestrictedMeta(key)
     await setArticleMeta(articles, a.slug, meta)
   }))
   articles.sort((a, b) => a.order - b.order)
@@ -128,7 +141,7 @@ export async function ensureSubTopicTitles(categorySlug, topicSlug, subSlug) {
   await Promise.all(articles.map(async (a) => {
     if (a.title) return
     const key = `${categorySlug}/${topicSlug}/${subSlug}/${a.slug}`
-    const meta = await loadOpenMeta(key)
+    const meta = await loadOpenMeta(key) || await loadRestrictedMeta(key)
     await setArticleMeta(articles, a.slug, meta)
   }))
   articles.sort((a, b) => a.order - b.order)
