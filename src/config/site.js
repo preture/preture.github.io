@@ -46,7 +46,6 @@ export const categories = [
       { id: 'second-brain', name: '第二大脑', description: '个人知识库构建' },
       { id: 'media-library', name: '媒体资源库', description: '媒体资源管理' },
       { id: 'mobile-tools', name: '移动工具箱', description: '手机常用工具集合' },
-      { id: 'puzzle-games', name: '益智娱乐', description: '小游戏开发方向' },
     ],
   },
   {
@@ -57,10 +56,19 @@ export const categories = [
     description: '心之所向，素履以往',
     topics: [
       { id: 'digital-world', name: '数字世界构建', description: '个人世界构建探索' },
-      { id: 'history-creation', name: '历史穿越创作', description: '历史穿越题材小说和游戏' },
+      { id: 'novel-creation', name: '小说创作', description: '原创小说与题材创作' },
       { id: 'ancient-texts', name: '古籍数字化', description: '古籍资料收集和校准' },
       { id: 'oracle-exploration', name: '甲骨文探秘', description: '甲骨文文字识别' },
+      { id: 'rebirth-game', name: '重生游戏', description: '重生题材游戏设计与开发' },
     ],
+  },
+  {
+    id: 'puzzle-games',
+    name: '益智娱乐',
+    emoji: '🧩',
+    color: '#3498db',
+    description: '小游戏开发方向',
+    topics: [],
   },
 ]
 

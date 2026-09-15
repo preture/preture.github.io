@@ -58,7 +58,7 @@ open/
 │   └── mobile-tools/
 ├── aspiration/                    # 心之所向
 │   ├── digital-world/
-│   ├── history-creation/
+│   ├── novel-creation/
 │   ├── ancient-texts/
 │   └── oracle-exploration/
 ```
