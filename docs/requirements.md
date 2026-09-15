@@ -48,6 +48,7 @@
 | 主题页 | 主题下的子方向/文章列表 | `/#/accumulation/programming-foundation` |
 | 文章页 | Markdown 全文 | `/#/accumulation/.../article-slug` |
 | 搜索页 | 全文检索 | `/#/search` |
+| 彩票页 | 双色球 / 大乐透开奖查询与号码查奖 | `/#/practice/mobile-tools/lottery` |
 
 ## 功能一览
 
@@ -60,6 +61,7 @@
 | Markdown 渲染 + 代码高亮 | ✅ |
 | 4 套主题 × 浅色/深色模式 | ✅ |
 | 客户端全文搜索（Fuse.js） | ✅ |
+| 彩票信息查询（双色球 / 大乐透历史 + 号码查奖） | ✅ |
 | 页面切换动画 | ✅ |
 | 响应式布局（Grid / Flexbox） | ✅ |
 | Giscus 评论 | ✅（需配置） |

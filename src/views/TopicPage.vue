@@ -31,6 +31,21 @@
     </template>
 
     <template v-else>
+      <div v-if="topic?.tools?.length" class="tool-grid">
+        <router-link
+          v-for="tool in topic.tools"
+          :key="tool.id"
+          :to="tool.path"
+          class="tool-card"
+        >
+          <span class="tool-emoji">{{ tool.emoji }}</span>
+          <div class="tool-body">
+            <h3>{{ tool.name }}</h3>
+            <p>{{ tool.description }}</p>
+          </div>
+          <span class="tool-arrow">&rarr;</span>
+        </router-link>
+      </div>
       <div v-if="articles.length" class="article-list">
         <router-link
           v-for="article in articles"
@@ -42,7 +57,7 @@
           <span class="article-arrow">&rarr;</span>
         </router-link>
       </div>
-      <div v-else class="placeholder">
+      <div v-if="!articles.length && !topic?.tools?.length" class="placeholder">
         <div class="placeholder-icon">📝</div>
         <p>功能完善中，敬请期待</p>
       </div>
@@ -226,6 +241,70 @@ function articleCount(subId) {
 
 .article-item:hover .article-arrow {
   opacity: 1;
+}
+
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.tool-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 1.15rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  text-decoration: none;
+  backdrop-filter: var(--backdrop);
+  -webkit-backdrop-filter: var(--backdrop);
+  box-shadow: var(--shadow);
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s, background 0.4s;
+}
+
+.tool-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.tool-emoji {
+  font-size: 1.8rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.tool-body h3 {
+  margin: 0 0 0.2rem;
+  color: var(--heading);
+  font-size: 0.95rem;
+  font-family: var(--font-heading);
+  font-weight: 600;
+}
+
+.tool-body p {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.tool-arrow {
+  margin-left: auto;
+  color: var(--accent);
+  font-size: 1rem;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.25s, transform 0.25s;
+}
+
+.tool-card:hover .tool-arrow {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .placeholder {

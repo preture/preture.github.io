@@ -45,7 +45,9 @@ export const categories = [
       { id: 'home-server', name: '家庭数据中心', description: '家庭工作站搭建与管理' },
       { id: 'second-brain', name: '第二大脑', description: '个人知识库构建' },
       { id: 'media-library', name: '媒体资源库', description: '媒体资源管理' },
-      { id: 'mobile-tools', name: '移动工具箱', description: '手机常用工具集合' },
+      { id: 'mobile-tools', name: '移动工具箱', description: '手机常用工具集合', tools: [
+          { id: 'lottery', name: '彩票信息查询', emoji: '🎰', description: '双色球 / 大乐透开奖查询和号码查奖', path: '/practice/mobile-tools/lottery' },
+        ] },
     ],
   },
   {

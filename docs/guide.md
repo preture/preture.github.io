@@ -74,6 +74,18 @@ export const giscus = {
 
 点击导航栏搜索图标或访问 `/#/search`，使用 Fuse.js 对文章标题和正文进行模糊搜索。
 
+## 彩票信息查询（移动工具箱）
+
+`/#/practice/mobile-tools/lottery` 提供双色球 / 大乐透历史开奖查询和号码查奖功能。
+
+开奖数据以静态 JSON 存放于 `public/lottery/`（构建时复制到 `dist/lottery/`），需定期更新：
+
+```bash
+npm run update-lottery
+```
+
+脚本从中国福利彩票 / 中国体育彩票官方接口抓取最近 100 期开奖数据，覆盖双色球（6 红 + 1 蓝）和大乐透（5 前区 + 2 后区）。提交更新后重新部署即可刷新数据。
+
 ## 部署
 
 推送到 `main` 分支后，GitHub Actions 自动执行 `npm run build` 并将 `dist/` 部署到 Pages。工作流文件：`.github/workflows/deploy.yml`。

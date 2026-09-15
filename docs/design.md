@@ -24,13 +24,14 @@ src/
 │   ├── MarkdownRenderer.vue       # Markdown 渲染 + 代码高亮
 │   ├── ThemeSwitcher.vue          # 主题下拉切换
 │   └── GiscusComment.vue          # Giscus 评论嵌入
-└── views/
-    ├── Home.vue                   # 首页（Hero + 分类卡片）
-    ├── CategoryPage.vue           # 分类 → 主题列表
-    ├── TopicPage.vue              # 主题 → 子方向 / 文章列表
-    ├── SubTopicPage.vue           # 子方向 → 文章列表
-    ├── ArticlePage.vue            # 文章全文
-    └── SearchPage.vue             # 全文搜索
+├── views/
+│   ├── Home.vue                   # 首页（Hero + 分类卡片）
+│   ├── CategoryPage.vue           # 分类 → 主题列表
+│   ├── TopicPage.vue              # 主题 → 子方向 / 工具卡片 / 文章列表
+│   ├── SubTopicPage.vue           # 子方向 → 文章列表
+│   ├── ArticlePage.vue            # 文章全文
+│   ├── SearchPage.vue             # 全文搜索
+│   └── LotteryQuery.vue           # 彩票信息查询（开奖历史 + 号码查奖）
 ```
 
 公开内容存放于 `open/`，三级结构（主题 → 文章）或四级结构（主题 → 方向 → 文章）由目录结构自动识别。

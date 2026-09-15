@@ -21,6 +21,7 @@ npm install       # install dependencies
 npm run dev       # start dev server (port 5173)
 npm run build     # production build
 npm run preview   # preview production build
+npm run update-lottery  # refresh lottery data in public/lottery/
 ```
 
 ## Code Conventions

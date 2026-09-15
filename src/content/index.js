@@ -225,6 +225,10 @@ const _openMetaInit = (async () => {
 
 export const openMetaReady = _openMetaInit
 
+const toolViews = {
+  lottery: () => import('../views/LotteryQuery.vue'),
+}
+
 export function buildRoutes() {
   const routes = []
 
@@ -278,6 +282,18 @@ export function buildRoutes() {
             name: `article-${cat.id}-${topic.id}-${article.slug}`,
             component: () => import('../views/ArticlePage.vue'),
             props: { articleSlug: article.slug, categorySlug: cat.id, topicId: topic.id },
+          })
+        })
+      }
+
+      if (topic.tools) {
+        topic.tools.forEach((tool) => {
+          const view = toolViews[tool.id]
+          if (!view) return
+          routes.push({
+            path: tool.path,
+            name: `tool-${cat.id}-${topic.id}-${tool.id}`,
+            component: view,
           })
         })
       }
