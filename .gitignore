@@ -3,7 +3,3 @@ node_modules
 dist
 *.local
 .DS_Store
-protected/
-privated/
-open/protected/
-open/privated/

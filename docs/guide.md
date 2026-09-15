@@ -74,63 +74,6 @@ export const giscus = {
 
 点击导航栏搜索图标或访问 `/#/search`，使用 Fuse.js 对文章标题和正文进行模糊搜索。
 
-## 登录配置
-
-### 配置用户
-
-编辑 `src/config/auth.js`，添加用户名、密码哈希和角色：
-
-```js
-export const users = [
-  { username: 'preture', passwordHash: '...', role: 'admin' },
-]
-```
-
-### 生成密码哈希
-
-```bash
-# openssl
-echo -n "你的密码" | openssl dgst -sha256
-
-# 或 Node.js
-node -e "console.log(require('crypto').createHash('sha256').update('你的密码').digest('hex'))"
-```
-
-### 配置分类级别
-
-在 `src/config/site.js` 中为分类添加 `level` 字段：
-
-```js
-{ id: 'protected', level: 'protected', /* ... */ }
-{ id: 'privated',  level: 'privated',  /* ... */ }
-```
-
-不设置 `level` 默认为 `open`。
-
-`protected` 和 `privated` 内容均使用加密归档。
-
-### 内容加密操作
-
-使用脚本 `scripts/encrypt-markdown-files.sh` 操作：
-
-```bash
-# 在 protected/ 和 privated/ 下创建笔记后，加密：
-./scripts/encrypt-markdown-files.sh encrypt
-
-# 提交加密文件（不提交原始 markdown）
-git add restricted-content.enc
-git commit -m "update restricted content"
-git push
-```
-
-在 GitHub 仓库 → **Settings → Secrets and variables → Actions** 添加 `HIDDEN_PASSWORD` 仓库 Secret，值为加密时使用的密码。
-
-本地解密查看：
-
-```bash
-./scripts/encrypt-markdown-files.sh decrypt
-```
-
 ## 部署
 
 推送到 `main` 分支后，GitHub Actions 自动执行 `npm run build` 并将 `dist/` 部署到 Pages。工作流文件：`.github/workflows/deploy.yml`。

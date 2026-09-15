@@ -5,11 +5,6 @@ const openModules = import.meta.glob('/open/**/*.md', {
   import: 'default',
 })
 
-const restrictedModules = import.meta.glob('/{protected,privated}/**/*.md', {
-  query: '?raw',
-  import: 'default',
-})
-
 function parseFrontmatter(content) {
   const match = content.match(/^---\s*\n([\s\S]*?)\n---\s*\n/)
   if (!match) return { data: {}, content }
@@ -45,8 +40,6 @@ const articlesByTopic = {}
 const articlesBySubTopic = {}
 const _openLoaders = {}
 const _openContentCache = {}
-const _restrictedLoaders = {}
-const _restrictedContentCache = {}
 const _openMetaLoaded = {}
 const _openOrderCache = {}
 
@@ -72,14 +65,6 @@ for (const filePath of Object.keys(openModules)) {
   const offset = 1
   const key = articleKey(segments, offset)
   _openLoaders[key] = openModules[filePath]
-  addArticleMeta(segments, offset, segments[segments.length - 1])
-}
-
-for (const filePath of Object.keys(restrictedModules)) {
-  const segments = filePath.replace(/^\//, '').replace(/\.md$/, '').split('/')
-  const offset = 0
-  const key = articleKey(segments, offset)
-  _restrictedLoaders[key] = restrictedModules[filePath]
   addArticleMeta(segments, offset, segments[segments.length - 1])
 }
 
@@ -110,26 +95,13 @@ async function setArticleMeta(articles, articleSlug, meta) {
   if (meta.order !== undefined) a.order = meta.order
 }
 
-async function loadRestrictedMeta(key) {
-  const loader = _restrictedLoaders[key]
-  if (!loader) return
-  const raw = await loader()
-  const { data, content } = parseFrontmatter(raw)
-  _restrictedContentCache[key] = content
-  return {
-    title: extractTitle(content),
-    body: bodyExcerpt(content),
-    order: data.order,
-  }
-}
-
 export async function ensureTopicTitles(categorySlug, topicSlug) {
   const articles = articlesByTopic[`${categorySlug}/${topicSlug}`]
   if (!articles) return
   await Promise.all(articles.map(async (a) => {
     if (a.title) return
     const key = `${categorySlug}/${topicSlug}/${a.slug}`
-    const meta = await loadOpenMeta(key) || await loadRestrictedMeta(key)
+    const meta = await loadOpenMeta(key)
     await setArticleMeta(articles, a.slug, meta)
   }))
   articles.sort((a, b) => a.order - b.order)
@@ -141,7 +113,7 @@ export async function ensureSubTopicTitles(categorySlug, topicSlug, subSlug) {
   await Promise.all(articles.map(async (a) => {
     if (a.title) return
     const key = `${categorySlug}/${topicSlug}/${subSlug}/${a.slug}`
-    const meta = await loadOpenMeta(key) || await loadRestrictedMeta(key)
+    const meta = await loadOpenMeta(key)
     await setArticleMeta(articles, a.slug, meta)
   }))
   articles.sort((a, b) => a.order - b.order)
@@ -169,7 +141,7 @@ export function getArticleContent(categorySlug, topicSlug, articleSlug, subSlug)
   const key = subSlug
     ? `${categorySlug}/${topicSlug}/${subSlug}/${articleSlug}`
     : `${categorySlug}/${topicSlug}/${articleSlug}`
-  return _openContentCache[key] || _restrictedContentCache[key] || ''
+  return _openContentCache[key] || ''
 }
 
 export async function loadArticleContent(categorySlug, topicSlug, articleSlug, subSlug) {
@@ -177,36 +149,15 @@ export async function loadArticleContent(categorySlug, topicSlug, articleSlug, s
     ? `${categorySlug}/${topicSlug}/${subSlug}/${articleSlug}`
     : `${categorySlug}/${topicSlug}/${articleSlug}`
 
-  if (_restrictedContentCache[key]) return _restrictedContentCache[key]
+  if (_openContentCache[key]) return _openContentCache[key]
 
-  const loader = _restrictedLoaders[key]
-  if (!loader) {
-    const openLoader = _openLoaders[key]
-    if (!openLoader) return ''
-    if (!_openContentCache[key]) {
-      const meta = await loadOpenMeta(key)
-      return meta ? _openContentCache[key] : ''
-    }
-    return _openContentCache[key]
+  const loader = _openLoaders[key]
+  if (!loader) return ''
+  if (!_openContentCache[key]) {
+    const meta = await loadOpenMeta(key)
+    return meta ? _openContentCache[key] : ''
   }
-
-  const raw = await loader()
-  const { content: cleanContent } = parseFrontmatter(raw)
-  _restrictedContentCache[key] = cleanContent
-
-  const isSub = !!subSlug
-  const articles = isSub
-    ? articlesBySubTopic[`${categorySlug}/${topicSlug}/${subSlug}`]
-    : articlesByTopic[`${categorySlug}/${topicSlug}`]
-  if (articles) {
-    const article = articles.find((a) => a.slug === articleSlug)
-    if (article) {
-      article.title = extractTitle(cleanContent)
-      article.body = bodyExcerpt(cleanContent)
-    }
-  }
-
-  return cleanContent
+  return _openContentCache[key]
 }
 
 export function buildSearchIndex() {
@@ -278,15 +229,11 @@ export function buildRoutes() {
   const routes = []
 
   categories.forEach((cat) => {
-    const level = cat.level || 'open'
-    const routeMeta = level !== 'open' ? { level } : undefined
-
     routes.push({
       path: `/${cat.id}`,
       name: `category-${cat.id}`,
       component: () => import('../views/CategoryPage.vue'),
       props: { categorySlug: cat.id },
-      meta: routeMeta,
     })
 
     cat.topics.forEach((topic) => {
@@ -296,7 +243,6 @@ export function buildRoutes() {
           name: `topic-${cat.id}-${topic.id}`,
           component: () => import('../views/TopicPage.vue'),
           props: { categorySlug: cat.id, topicId: topic.id },
-          meta: routeMeta,
         })
 
         topic.subTopics.forEach((sub) => {
@@ -305,7 +251,6 @@ export function buildRoutes() {
             name: `subtopic-${cat.id}-${topic.id}-${sub.id}`,
             component: () => import('../views/SubTopicPage.vue'),
             props: { categorySlug: cat.id, topicId: topic.id, subTopicId: sub.id },
-            meta: routeMeta,
           })
 
           const articles = getSubTopicArticles(cat.id, topic.id, sub.id)
@@ -315,7 +260,6 @@ export function buildRoutes() {
               name: `article-${cat.id}-${topic.id}-${sub.id}-${article.slug}`,
               component: () => import('../views/ArticlePage.vue'),
               props: { articleSlug: article.slug, categorySlug: cat.id, topicId: topic.id, subTopicId: sub.id },
-              meta: routeMeta,
             })
           })
         })
@@ -325,7 +269,6 @@ export function buildRoutes() {
           name: `topic-${cat.id}-${topic.id}`,
           component: () => import('../views/TopicPage.vue'),
           props: { categorySlug: cat.id, topicId: topic.id },
-          meta: routeMeta,
         })
 
         const articles = getTopicArticles(cat.id, topic.id)
@@ -335,7 +278,6 @@ export function buildRoutes() {
             name: `article-${cat.id}-${topic.id}-${article.slug}`,
             component: () => import('../views/ArticlePage.vue'),
             props: { articleSlug: article.slug, categorySlug: cat.id, topicId: topic.id },
-            meta: routeMeta,
           })
         })
       }

@@ -29,7 +29,7 @@ npm run preview   # preview production build
 - Theme variables defined in `src/assets/themes.css`, accessed via `var(--xxx)` in all components
 - No highlight.js CSS theme files — all syntax highlighting styles are custom in `MarkdownRenderer.vue`
 - Components under `src/components/`, views under `src/views/`
-- Site config (categories, topics, giscus, auth) in `src/config/`
+- Site config (categories, topics, giscus, busuanzi) in `src/config/`
 - Markdown content under `open/`
 - Scoped styles preferred; global styles in `src/assets/main.css` and `src/assets/themes.css`
 

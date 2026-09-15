@@ -3,31 +3,27 @@
 ## 目录结构
 
 ```
-open/                              # 公开内容（受保护内容 CI 解密至此）
+open/                              # 公开内容
 ├── accumulation/                  # 厚积薄发
 ├── empowerment/                   # 如虎添翼
 ├── practice/                      # 身体力行
 └── aspiration/                    # 心之所向
 src/
 ├── main.js                        # 入口
-├── App.vue                        # 布局外壳（header / footer / 登录 / 主题切换）
+├── App.vue                        # 布局外壳（header / footer / 主题切换）
 ├── assets/
 │   ├── main.css                   # 全局样式
 │   └── themes.css                 # 4 套主题 × 2 种模式 (light/dark)
 ├── config/
-│   ├── site.js                    # 分类/主题元数据 + Giscus + 不蒜子配置
-│   └── auth.js                    # 后台登录用户配置
-├── composables/
-│   └── useAuth.js                 # 登录状态管理 + SHA-256 密码校验
+│   └── site.js                    # 分类/主题元数据 + Giscus + 不蒜子配置
 ├── router/
-│   └── index.js                   # 路由定义 + 访问控制守卫
+│   └── index.js                   # 路由定义
 ├── content/
 │   └── index.js                   # Markdown glob 加载器 + 搜索引擎索引 + 路由生成
 ├── components/
 │   ├── MarkdownRenderer.vue       # Markdown 渲染 + 代码高亮
 │   ├── ThemeSwitcher.vue          # 主题下拉切换
-│   ├── GiscusComment.vue          # Giscus 评论嵌入
-│   └── LoginModal.vue             # 登录弹窗
+│   └── GiscusComment.vue          # Giscus 评论嵌入
 └── views/
     ├── Home.vue                   # 首页（Hero + 分类卡片）
     ├── CategoryPage.vue           # 分类 → 主题列表
@@ -37,7 +33,7 @@ src/
     └── SearchPage.vue             # 全文搜索
 ```
 
-公开内容存放于 `open/`（受保护内容通过 CI 解密到 `open/`），三级结构（主题 → 文章）或四级结构（主题 → 方向 → 文章）由目录结构自动识别。
+公开内容存放于 `open/`，三级结构（主题 → 文章）或四级结构（主题 → 方向 → 文章）由目录结构自动识别。
 
 ## 内容目录结构
 
@@ -65,10 +61,6 @@ open/
 │   ├── history-creation/
 │   ├── ancient-texts/
 │   └── oracle-exploration/
-├── protected/                     # 保护空间（登录后可见，CI 解密）
-│   └── python-learn/
-└── privated/                      # 私人空间（仅管理员，CI 解密）
-    └── private-notes/
 ```
 
 ## 页面布局设计

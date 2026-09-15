@@ -38,14 +38,9 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { categories } from '../router'
-import { useAuth } from '../composables/useAuth'
 
-const { canAccess } = useAuth()
-const visibleCategories = computed(() =>
-  categories.filter((c) => canAccess(c.level || 'open'))
-)
+const visibleCategories = categories
 </script>
 
 <style scoped>

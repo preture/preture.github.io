@@ -39,12 +39,9 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import Fuse from 'fuse.js'
 import { buildSearchIndex, openMetaReady } from '../content'
-import { getCategoryLevel } from '../config/site'
-import { useAuth } from '../composables/useAuth'
 
 const query = ref('')
 const inputRef = ref(null)
-const { canAccess } = useAuth()
 
 const fuse = ref(null)
 const allArticles = ref([])
@@ -55,7 +52,6 @@ const results = computed(() => {
   return fuse.value
     .search(query.value.trim())
     .map((r) => r.item)
-    .filter((item) => canAccess(getCategoryLevel(item.category)))
 })
 
 onMounted(async () => {
@@ -67,7 +63,7 @@ onMounted(async () => {
     includeScore: true,
     minMatchCharLength: 1,
   })
-  allArticles.value = items.filter((item) => canAccess(getCategoryLevel(item.category)))
+  allArticles.value = items
   nextTick(() => inputRef.value?.focus())
 })
 </script>
