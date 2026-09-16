@@ -91,6 +91,7 @@
 
       <!-- ============ 号码查询 ============ -->
       <div v-else class="query-panel">
+        <div class="query-main">
         <div class="num-form">
           <div class="num-field">
             <label>{{ frontLabel }}(1-{{ meta.frontMax }})</label>
@@ -110,8 +111,27 @@
               :placeholder="`输入 ${meta.backSize} 个号码，用逗号分隔，如 ${placeholderBack}`"
             />
           </div>
-          <button class="query-btn" :disabled="!validInput" @click="runQuery">查询中奖历史</button>
+          <div class="btn-group">
+            <button class="query-btn" :disabled="!validInput" @click="runQuery">查询中奖历史</button>
+            <button class="random-btn" @click="randomPick">机选一注</button>
+          </div>
           <p v-if="validateMsg && !validInput" class="validate-msg">{{ validateMsg }}</p>
+        </div>
+
+        <aside v-if="type === 'ssq'" class="examples">
+          <h3 class="examples-title">双色球示例</h3>
+          <p class="examples-desc">点击号码自动填入并查询</p>
+          <button class="example-line" @click="applyExample('7,11,13,22,23,29', '16')">
+            <span class="example-balls">
+              <i class="ball ball-red">07</i><i class="ball ball-red">11</i><i class="ball ball-red">13</i><i class="ball ball-red">22</i><i class="ball ball-red">23</i><i class="ball ball-red">29</i><i class="ball ball-blue">16</i>
+            </span>
+          </button>
+          <button class="example-line" @click="applyExample('4,9,11,12,16,31', '7')">
+            <span class="example-balls">
+              <i class="ball ball-red">04</i><i class="ball ball-red">09</i><i class="ball ball-red">11</i><i class="ball ball-red">12</i><i class="ball ball-red">16</i><i class="ball ball-red">31</i><i class="ball ball-blue">07</i>
+            </span>
+          </button>
+        </aside>
         </div>
 
         <div v-if="queryResults !== null" class="query-result">
@@ -193,6 +213,32 @@ function switchType(t) {
   frontInput.value = ''
   backInput.value = ''
   queryResults.value = null
+}
+
+function randomPick() {
+  const m = meta.value
+  const front = shuffleRange(1, m.frontMax).slice(0, m.frontSize).sort((a, b) => a - b)
+  const back = shuffleRange(1, m.backMax).slice(0, m.backSize).sort((a, b) => a - b)
+  frontInput.value = front.map((n) => String(n).padStart(2, '0')).join(',')
+  backInput.value = back.map((n) => String(n).padStart(2, '0')).join(',')
+  queryResults.value = null
+}
+
+function applyExample(frontStr, backStr) {
+  if (type.value !== 'ssq') switchType('ssq')
+  frontInput.value = frontStr
+  backInput.value = backStr
+  runQuery()
+}
+
+function shuffleRange(min, max) {
+  const arr = []
+  for (let i = min; i <= max; i++) arr.push(i)
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr
 }
 
 function prizeName(tier) {
@@ -548,10 +594,18 @@ onMounted(load)
 
 /* ---- 号码查询 ---- */
 .query-panel {
-  max-width: 680px;
+  max-width: 840px;
+}
+
+.query-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
 }
 
 .num-form {
+  flex: 1;
+  min-width: 0;
   padding: 1.25rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -584,7 +638,70 @@ onMounted(load)
   border-color: var(--accent);
 }
 
-.query-btn {
+.examples {
+  width: 250px;
+  flex-shrink: 0;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+}
+
+.examples-title {
+  margin: 0 0 0.25rem;
+  font-size: 0.9rem;
+  color: var(--heading);
+  font-family: var(--font-heading);
+}
+
+.examples-desc {
+  margin: 0 0 0.75rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.example-line {
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.5rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  background: var(--bg-body);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.example-line:last-child {
+  margin-bottom: 0;
+}
+
+.example-line:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.example-balls {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.example-balls .ball {
+  width: 24px;
+  height: 24px;
+  font-size: 0.7rem;
+}
+
+.btn-group {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.query-btn,
+.random-btn {
+  flex: 1;
   padding: 0.65rem;
   border: none;
   border-radius: var(--radius);
@@ -593,6 +710,12 @@ onMounted(load)
   font-size: 0.95rem;
   cursor: pointer;
   transition: opacity 0.2s;
+}
+
+.random-btn {
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--border);
 }
 
 .query-btn:disabled {
@@ -668,6 +791,15 @@ onMounted(load)
   font-size: 0.85rem;
   font-weight: 600;
   color: #e74c3c;
+}
+
+@media (max-width: 700px) {
+  .query-main {
+    flex-direction: column;
+  }
+  .examples {
+    width: 100%;
+  }
 }
 
 @media (max-width: 560px) {

@@ -47,23 +47,33 @@ async function fetchSSQ(count = 100) {
 }
 
 async function fetchDLT(count = 100) {
-  const url = `https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=${count}&isVerify=1&pageNo=1`
-  const raw = JSON.parse(await fetch(url))
-  const list = raw.value?.list
-  if (!list?.length) throw new Error('DLT: empty result')
-  return list.map((item) => {
-    const nums = item.lotteryDrawResult.trim().split(/\s+/)
-    const front = nums.slice(0, 5)
-    const back = nums.slice(5)
-    const prizes = (item.prizeLevelList || [])
-      .map((p) => ({
-        tier: p.sort ? Math.floor(p.sort / 100) : 0,
-        count: Number(p.stakeCount) || 0,
-        amount: Number(String(p.stakeAmountFormat || p.stakeAmount).replace(/,/g, '')) || 0,
-      }))
-      .filter((p) => p.amount > 0 && p.tier >= 1 && p.tier <= 9)
-    return { issue: item.lotteryDrawNum, date: item.lotteryDrawTime, front, back, prizes }
-  })
+  const pageSize = 100
+  const totalPages = Math.ceil(count / pageSize)
+  const draws = []
+  for (let page = 1; page <= totalPages; page++) {
+    const url = `https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=${pageSize}&isVerify=1&pageNo=${page}`
+    const raw = JSON.parse(await fetch(url))
+    const list = raw.value?.list
+    if (!list?.length) {
+      if (page === 1) throw new Error('DLT: empty result')
+      break
+    }
+    draws.push(...list.map((item) => {
+      const nums = item.lotteryDrawResult.trim().split(/\s+/)
+      const front = nums.slice(0, 5)
+      const back = nums.slice(5)
+      const prizes = (item.prizeLevelList || [])
+        .map((p) => ({
+          tier: p.sort ? Math.floor(p.sort / 100) : 0,
+          count: Number(p.stakeCount) || 0,
+          amount: Number(String(p.stakeAmountFormat || p.stakeAmount).replace(/,/g, '')) || 0,
+        }))
+        .filter((p) => p.amount > 0 && p.tier >= 1 && p.tier <= 9)
+      return { issue: item.lotteryDrawNum, date: item.lotteryDrawTime, front, back, prizes }
+    }))
+    if (draws.length >= count) break
+  }
+  return draws.slice(0, count)
 }
 
 function save(name, data) {
@@ -75,9 +85,9 @@ function save(name, data) {
 
 try {
   console.log('Fetching lottery data...')
-  const ssq = await fetchSSQ(100)
+  const ssq = await fetchSSQ(500)
   save('ssq', { type: 'ssq', name: '双色球', frontSize: 6, backSize: 1, frontMax: 33, backMax: 16, draws: ssq })
-  const dlt = await fetchDLT(100)
+  const dlt = await fetchDLT(500)
   save('dlt', { type: 'dlt', name: '大乐透', frontSize: 5, backSize: 2, frontMax: 35, backMax: 12, draws: dlt })
   console.log('Done.')
 } catch (e) {
