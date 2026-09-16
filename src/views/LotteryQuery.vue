@@ -61,7 +61,7 @@
           <span class="draw-count">共 {{ filteredDraws.length }} 期</span>
         </div>
         <div class="draw-list">
-          <div v-for="d in filteredDraws" :key="d.issue" class="draw-item">
+          <div v-for="d in pageDraws" :key="d.issue" class="draw-item">
             <div class="draw-meta">
               <span class="draw-issue">第 {{ d.issue }} 期</span>
               <span class="draw-date">{{ d.date }}</span>
@@ -86,6 +86,19 @@
               </span>
             </div>
           </div>
+        </div>
+
+        <div class="pagination" v-if="totalPages > 1">
+          <button class="page-btn" :disabled="currentPage <= 1" @click="currentPage--">上一页</button>
+          <button
+            v-for="it in pageItems"
+            :key="it.key"
+            class="page-btn"
+            :class="{ active: it.page === currentPage }"
+            :disabled="it.type === 'ellipsis'"
+            @click="currentPage = it.page"
+          >{{ it.type === 'ellipsis' ? '…' : it.page }}</button>
+          <button class="page-btn" :disabled="currentPage >= totalPages" @click="currentPage++">下一页</button>
         </div>
       </div>
 
@@ -176,7 +189,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 
 const lotteryTypes = [
   { type: 'ssq', name: '双色球' },
@@ -193,6 +206,8 @@ const issueFilter = ref('')
 const frontInput = ref('')
 const backInput = ref('')
 const queryResults = ref(null)
+const pageSize = 50
+const currentPage = ref(1)
 
 const meta = computed(() => dataMap[type.value] || { frontSize: 6, backSize: 1, frontMax: 33, backMax: 16, draws: [] })
 const frontLabel = computed(() => (type.value === 'ssq' ? '红球' : '前区'))
@@ -204,6 +219,35 @@ const filteredDraws = computed(() => {
   const kw = issueFilter.value.trim()
   if (!kw) return meta.value.draws
   return meta.value.draws.filter((d) => d.issue.includes(kw))
+})
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredDraws.value.length / pageSize)))
+
+const pageDraws = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return filteredDraws.value.slice(start, start + pageSize)
+})
+
+const pageItems = computed(() => {
+  const total = totalPages.value
+  const cur = currentPage.value
+  const pages = new Set([1, total])
+  for (let i = cur - 1; i <= cur + 1; i++) {
+    if (i >= 1 && i <= total) pages.add(i)
+  }
+  const sorted = [...pages].sort((a, b) => a - b)
+  const items = []
+  let prev = 0
+  for (const p of sorted) {
+    if (p - prev > 1) items.push({ type: 'ellipsis', key: `e${p}` })
+    items.push({ type: 'page', page: p, key: `p${p}` })
+    prev = p
+  }
+  return items
+})
+
+watch([issueFilter, type, () => filteredDraws.value.length], () => {
+  currentPage.value = 1
 })
 
 function switchType(t) {
@@ -500,6 +544,43 @@ onMounted(load)
 .draw-count {
   color: var(--text-muted);
   font-size: 0.8rem;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin-top: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.page-btn {
+  min-width: 34px;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  color: var(--text-soft);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.page-btn:hover:not(:disabled):not(.active) {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.page-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .draw-list {
